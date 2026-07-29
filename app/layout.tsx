@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./atlas.css";
 import "./local-graph.css";
+import "./translation.css";
 
 export const metadata: Metadata = {
   title: {

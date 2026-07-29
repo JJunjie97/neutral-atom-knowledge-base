@@ -162,6 +162,7 @@ def compact_node(
         "authors": node.get("authors") or [],
         "venue": node.get("venue"),
         "type": node.get("work_type"),
+        "abstract": node.get("abstract"),
         "url": node.get("url"),
         "oaUrl": node.get("oa_url"),
         "doi": node.get("doi"),

@@ -13,6 +13,7 @@ export type GraphNode = {
   authors: string[];
   venue: string | null;
   type: string | null;
+  abstract: string | null;
   url: string | null;
   oaUrl: string | null;
   doi: string | null;
