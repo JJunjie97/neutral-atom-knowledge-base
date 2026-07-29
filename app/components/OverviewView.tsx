@@ -112,11 +112,11 @@ export default function OverviewView({
           <span className="metric-icon">
             <Network size={19} />
           </span>
-          <small>核心种子文献</small>
+          <small>综述收录文献</small>
           <strong>
             {formatNumber(visibleNodes.filter((node) => node.seed).length)}
           </strong>
-          <p>直接来自综述 BibTeX 的合并实体</p>
+          <p>综述 BibTeX 去重后的文献实体</p>
         </article>
       </div>
 
@@ -157,10 +157,10 @@ export default function OverviewView({
         <article className="overview-panel">
           <div className="panel-heading">
             <div>
-              <span className="timeline-kicker">HUB PAPERS</span>
-              <h3>网络枢纽文献</h3>
+              <span className="timeline-kicker">NETWORK RANKING</span>
+              <h3>Most Connected Papers</h3>
             </div>
-            <small>按连接度</small>
+            <small>Ranked by graph degree</small>
           </div>
           <div className="hub-list">
             {topPapers.map((index, rank) => {

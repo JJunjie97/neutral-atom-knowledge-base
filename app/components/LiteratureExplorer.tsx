@@ -61,6 +61,8 @@ export default function LiteratureExplorer() {
   const [view, setView] = useState<ViewName>("graph");
   const [filters, setFilters] = useState<GraphFilters>(INITIAL_FILTERS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isolateRootId, setIsolateRootId] = useState<string | null>(null);
+  const [isolateDepth, setIsolateDepth] = useState<1 | 2>(1);
   const [loadingFull, setLoadingFull] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const deferredQuery = useDeferredValue(filters.query);
@@ -107,6 +109,8 @@ export default function LiteratureExplorer() {
   );
   const selectedIndex =
     selectedId == null ? null : (nodeIndexById.get(selectedId) ?? null);
+  const isolateRootIndex =
+    isolateRootId == null ? null : (nodeIndexById.get(isolateRootId) ?? null);
 
   const visibleIndices = useMemo(() => {
     if (!data) return [];
@@ -141,6 +145,7 @@ export default function LiteratureExplorer() {
   }, [data, deferredQuery, visibleIndices]);
 
   async function switchScope(nextScope: "core" | "full") {
+    setIsolateRootId(null);
     if (nextScope === "core") {
       setScope("core");
       return;
@@ -177,6 +182,18 @@ export default function LiteratureExplorer() {
 
   function selectIndex(index: number | null) {
     setSelectedId(index == null || !data ? null : data.nodes[index].id);
+  }
+
+  function toggleLocalGraph(index: number) {
+    if (!data) return;
+    const nodeId = data.nodes[index].id;
+    setView("graph");
+    if (isolateRootId === nodeId) {
+      setIsolateRootId(null);
+      return;
+    }
+    setIsolateRootId(nodeId);
+    setIsolateDepth(1);
   }
 
   if (error && !coreData) {
@@ -412,11 +429,11 @@ export default function LiteratureExplorer() {
 
           <section className="filter-section">
             <div className="filter-section-heading">
-              <span>最小网络连接度</span>
+              <span>Minimum graph degree</span>
               <strong>{filters.minDegree}</strong>
             </div>
             <input
-              aria-label="最小网络连接度"
+              aria-label="Minimum graph degree"
               className="degree-slider"
               max={scope === "core" ? 80 : 30}
               min={0}
@@ -428,7 +445,7 @@ export default function LiteratureExplorer() {
             />
             <div className="range-labels">
               <span>全部</span>
-              <span>枢纽文献</span>
+              <span>High degree</span>
             </div>
           </section>
 
@@ -463,6 +480,11 @@ export default function LiteratureExplorer() {
           {view === "graph" && (
             <GraphCanvas
               data={data}
+              isolateDepth={isolateDepth}
+              isolateRootIndex={isolateRootIndex}
+              key={`${scope}-${isolateRootId ?? "global"}-${isolateDepth}`}
+              onExitIsolate={() => setIsolateRootId(null)}
+              onIsolateDepthChange={setIsolateDepth}
               onSelect={selectIndex}
               selectedIndex={selectedIndex}
               visibleIndices={visibleIndices}
@@ -485,7 +507,11 @@ export default function LiteratureExplorer() {
 
           <DetailsPanel
             data={data}
+            isIsolatedRoot={
+              selectedId != null && selectedId === isolateRootId
+            }
             onClose={() => setSelectedId(null)}
+            onIsolate={toggleLocalGraph}
             onSelect={(index) => selectIndex(index)}
             selectedIndex={selectedIndex}
           />

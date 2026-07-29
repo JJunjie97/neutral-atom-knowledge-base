@@ -5,6 +5,7 @@ import {
   Maximize2,
   Minus,
   Plus,
+  X,
 } from "lucide-react";
 import {
   useCallback,
@@ -27,8 +28,19 @@ type Point = {
   y: number;
 };
 
+type LocalGraph = {
+  indices: number[];
+  mask: Uint8Array;
+  positions: Map<number, Point>;
+  truncated: boolean;
+};
+
 type Props = {
   data: GraphData;
+  isolateDepth: 1 | 2;
+  isolateRootIndex: number | null;
+  onExitIsolate: () => void;
+  onIsolateDepthChange: (depth: 1 | 2) => void;
   visibleIndices: number[];
   selectedIndex: number | null;
   onSelect: (index: number | null) => void;
@@ -38,9 +50,15 @@ const BACKGROUND = "#09101f";
 const EDGE = "rgba(128, 151, 190, 0.12)";
 const EDGE_FULL = "rgba(116, 139, 178, 0.065)";
 const HIGHLIGHT = "#F5D67B";
+const MAX_ZOOM = 256;
+const MAX_LOCAL_NODES = 2800;
 
 export default function GraphCanvas({
   data,
+  isolateDepth,
+  isolateRootIndex,
+  onExitIsolate,
+  onIsolateDepthChange,
   visibleIndices,
   selectedIndex,
   onSelect,
@@ -72,15 +90,117 @@ export default function GraphCanvas({
     return mask;
   }, [data.nodes.length, visibleIndices]);
 
+  const localGraph = useMemo<LocalGraph | null>(() => {
+    if (isolateRootIndex == null) return null;
+
+    const allowed = visibleMask.slice();
+    allowed[isolateRootIndex] = 1;
+    const adjacency = new Map<number, number[]>();
+    for (const [source, target] of data.edges) {
+      const sourceNeighbors = adjacency.get(source);
+      if (sourceNeighbors) sourceNeighbors.push(target);
+      else adjacency.set(source, [target]);
+      const targetNeighbors = adjacency.get(target);
+      if (targetNeighbors) targetNeighbors.push(source);
+      else adjacency.set(target, [source]);
+    }
+
+    const depthByIndex = new Map<number, number>([[isolateRootIndex, 0]]);
+    let frontier = [isolateRootIndex];
+    let truncated = false;
+
+    for (let depth = 1; depth <= isolateDepth; depth += 1) {
+      const candidates = new Set<number>();
+      for (const index of frontier) {
+        for (const neighbor of adjacency.get(index) ?? []) {
+          if (allowed[neighbor] && !depthByIndex.has(neighbor)) {
+            candidates.add(neighbor);
+          }
+        }
+      }
+
+      let next = [...candidates].sort(
+        (left, right) =>
+          nodeDegree(data.nodes[right]) - nodeDegree(data.nodes[left]),
+      );
+      const remaining = MAX_LOCAL_NODES - depthByIndex.size;
+      if (next.length > remaining) {
+        next = next.slice(0, Math.max(remaining, 0));
+        truncated = true;
+      }
+      for (const index of next) depthByIndex.set(index, depth);
+      frontier = next;
+      if (!frontier.length || depthByIndex.size >= MAX_LOCAL_NODES) break;
+    }
+
+    const groupOrder = new Map(
+      data.sections.map((section, index) => [section.id, index]),
+    );
+    const positions = new Map<number, Point>([
+      [isolateRootIndex, { x: 0, y: 0 }],
+    ]);
+
+    for (let depth = 1; depth <= isolateDepth; depth += 1) {
+      const layer = [...depthByIndex.entries()]
+        .filter(([, itemDepth]) => itemDepth === depth)
+        .map(([index]) => index)
+        .sort((left, right) => {
+          const groupDiff =
+            (groupOrder.get(data.nodes[left].group) ?? 99) -
+            (groupOrder.get(data.nodes[right].group) ?? 99);
+          if (groupDiff) return groupDiff;
+          return nodeDegree(data.nodes[right]) - nodeDegree(data.nodes[left]);
+        });
+
+      layer.forEach((index, rank) => {
+        const fraction = rank / Math.max(layer.length, 1);
+        const angle = fraction * Math.PI * 2 - Math.PI / 2;
+        const ripple = (rank % 5) / 5;
+        const radius =
+          depth === 1
+            ? 0.48 + ripple * 0.18
+            : 1.0 + Math.sqrt(fraction) * 0.42 + ripple * 0.08;
+        positions.set(index, {
+          x: Math.cos(angle) * radius,
+          y: Math.sin(angle) * radius,
+        });
+      });
+    }
+
+    const indices = [...depthByIndex.keys()];
+    const mask = new Uint8Array(data.nodes.length);
+    for (const index of indices) mask[index] = 1;
+    return { indices, mask, positions, truncated };
+  }, [
+    data.edges,
+    data.nodes,
+    data.sections,
+    isolateDepth,
+    isolateRootIndex,
+    visibleMask,
+  ]);
+
+  const renderIndices = localGraph?.indices ?? visibleIndices;
+  const renderMask = localGraph?.mask ?? visibleMask;
+
+  const positionFor = useCallback(
+    (index: number): Point =>
+      localGraph?.positions.get(index) ?? {
+        x: data.nodes[index].x,
+        y: data.nodes[index].y,
+      },
+    [data.nodes, localGraph],
+  );
+
   const degreeLeaders = useMemo(
     () =>
-      [...visibleIndices]
+      [...renderIndices]
         .sort(
           (left, right) =>
             nodeDegree(data.nodes[right]) - nodeDegree(data.nodes[left]),
         )
-        .slice(0, data.nodes.length > 1000 ? 5 : 14),
-    [data.nodes, visibleIndices],
+        .slice(0, renderIndices.length > 1000 ? 6 : 16),
+    [data.nodes, renderIndices],
   );
 
   const baseScale = Math.min(size.width, size.height) * 0.38;
@@ -108,14 +228,14 @@ export default function GraphCanvas({
   const findNodeAt = useCallback(
     (screenX: number, screenY: number) => {
       const world = screenToWorld(screenX, screenY);
-      const tolerance = 11 / (baseScale * transform.zoom);
+      const tolerance = 12 / (baseScale * transform.zoom);
       let nearest: number | null = null;
       let nearestDistance = tolerance * tolerance;
 
-      for (const index of visibleIndices) {
-        const node = data.nodes[index];
-        const dx = node.x - world.x;
-        const dy = node.y - world.y;
+      for (const index of renderIndices) {
+        const position = positionFor(index);
+        const dx = position.x - world.x;
+        const dy = position.y - world.y;
         const distance = dx * dx + dy * dy;
         if (distance < nearestDistance) {
           nearest = index;
@@ -124,7 +244,13 @@ export default function GraphCanvas({
       }
       return nearest;
     },
-    [baseScale, data.nodes, screenToWorld, transform.zoom, visibleIndices],
+    [
+      baseScale,
+      positionFor,
+      renderIndices,
+      screenToWorld,
+      transform.zoom,
+    ],
   );
 
   useEffect(() => {
@@ -176,26 +302,29 @@ export default function GraphCanvas({
       }
 
       const drawAllEdges =
+        localGraph != null ||
         data.nodes.length <= 1000 ||
         transform.zoom > 1.18 ||
         focusIndex != null;
       if (drawAllEdges) {
         context.beginPath();
         for (const [source, target] of data.edges) {
-          if (!visibleMask[source] || !visibleMask[target]) continue;
+          if (!renderMask[source] || !renderMask[target]) continue;
           if (
             focusIndex != null &&
             (source === focusIndex || target === focusIndex)
           ) {
             continue;
           }
-          const from = worldToScreen(data.nodes[source].x, data.nodes[source].y);
-          const to = worldToScreen(data.nodes[target].x, data.nodes[target].y);
+          const fromPosition = positionFor(source);
+          const toPosition = positionFor(target);
+          const from = worldToScreen(fromPosition.x, fromPosition.y);
+          const to = worldToScreen(toPosition.x, toPosition.y);
           context.moveTo(from.x, from.y);
           context.lineTo(to.x, to.y);
         }
         context.strokeStyle =
-          data.nodes.length > 1000 ? EDGE_FULL : EDGE;
+          data.nodes.length > 1000 && localGraph == null ? EDGE_FULL : EDGE;
         context.lineWidth = 0.65;
         context.stroke();
       }
@@ -203,10 +332,12 @@ export default function GraphCanvas({
       if (focusIndex != null) {
         context.beginPath();
         for (const [source, target] of data.edges) {
-          if (!visibleMask[source] || !visibleMask[target]) continue;
+          if (!renderMask[source] || !renderMask[target]) continue;
           if (source !== focusIndex && target !== focusIndex) continue;
-          const from = worldToScreen(data.nodes[source].x, data.nodes[source].y);
-          const to = worldToScreen(data.nodes[target].x, data.nodes[target].y);
+          const fromPosition = positionFor(source);
+          const toPosition = positionFor(target);
+          const from = worldToScreen(fromPosition.x, fromPosition.y);
+          const to = worldToScreen(toPosition.x, toPosition.y);
           context.moveTo(from.x, from.y);
           context.lineTo(to.x, to.y);
         }
@@ -215,9 +346,10 @@ export default function GraphCanvas({
         context.stroke();
       }
 
-      for (const index of visibleIndices) {
+      for (const index of renderIndices) {
         const node = data.nodes[index];
-        const point = worldToScreen(node.x, node.y);
+        const position = positionFor(index);
+        const point = worldToScreen(position.x, position.y);
         if (
           point.x < -20 ||
           point.y < -20 ||
@@ -228,57 +360,73 @@ export default function GraphCanvas({
         }
         const degree = nodeDegree(node);
         const isFocus = index === focusIndex;
+        const isRoot = index === isolateRootIndex;
         const isNeighbor = focusNeighbors.has(index);
         const baseRadius =
-          data.nodes.length > 1000 && !node.seed
+          data.nodes.length > 1000 && !node.seed && localGraph == null
             ? 1.15
             : Math.min(8.5, 2.1 + Math.sqrt(degree + 1) * 0.34);
-        const radius = isFocus ? Math.max(7, baseRadius + 2.7) : baseRadius;
+        const radius =
+          isRoot || isFocus ? Math.max(7, baseRadius + 2.7) : baseRadius;
         const color = colorMap.get(node.group) ?? "#7F8DA8";
 
-        if (isFocus) {
+        if (isRoot || isFocus) {
           context.beginPath();
           context.arc(point.x, point.y, radius + 5, 0, Math.PI * 2);
-          context.fillStyle = "rgba(245, 214, 123, 0.16)";
+          context.fillStyle = isRoot
+            ? "rgba(99, 219, 199, 0.18)"
+            : "rgba(245, 214, 123, 0.16)";
           context.fill();
         }
 
         context.beginPath();
         context.arc(point.x, point.y, radius, 0, Math.PI * 2);
         context.fillStyle =
-          focusIndex != null && !isNeighbor ? `${color}40` : color;
+          focusIndex != null && !isNeighbor && !isRoot ? `${color}40` : color;
         context.fill();
-        if (node.seed) {
-          context.strokeStyle = isFocus
-            ? HIGHLIGHT
-            : "rgba(255, 255, 255, 0.42)";
-          context.lineWidth = isFocus ? 1.8 : 0.65;
+        if (node.seed || isRoot) {
+          context.strokeStyle = isRoot
+            ? "#63DBC7"
+            : isFocus
+              ? HIGHLIGHT
+              : "rgba(255, 255, 255, 0.42)";
+          context.lineWidth = isRoot || isFocus ? 1.8 : 0.65;
           context.stroke();
         }
       }
 
       const labels = new Set<number>();
-      if (transform.zoom > 1.12 && data.nodes.length <= 1000) {
+      if (
+        transform.zoom > 1.12 &&
+        (renderIndices.length <= 1000 || localGraph != null)
+      ) {
         degreeLeaders.forEach((index) => labels.add(index));
       }
       if (hoveredIndex != null) labels.add(hoveredIndex);
       if (selectedIndex != null) labels.add(selectedIndex);
+      if (isolateRootIndex != null) labels.add(isolateRootIndex);
 
       context.font =
         '500 12px ui-sans-serif, "Microsoft YaHei", system-ui, sans-serif';
       context.textBaseline = "middle";
       for (const index of labels) {
-        if (!visibleMask[index]) continue;
+        if (!renderMask[index]) continue;
         const node = data.nodes[index];
-        const point = worldToScreen(node.x, node.y);
+        const position = positionFor(index);
+        const point = worldToScreen(position.x, position.y);
         const title =
           node.title.length > 46 ? `${node.title.slice(0, 46)}…` : node.title;
         const width = context.measureText(title).width;
         const labelX = point.x + 11;
         const labelY = point.y;
-        context.fillStyle = "rgba(5, 11, 23, 0.88)";
+        context.fillStyle = "rgba(5, 11, 23, 0.9)";
         context.fillRect(labelX - 5, labelY - 11, width + 10, 22);
-        context.fillStyle = index === selectedIndex ? HIGHLIGHT : "#E8EDF7";
+        context.fillStyle =
+          index === isolateRootIndex
+            ? "#63DBC7"
+            : index === selectedIndex
+              ? HIGHLIGHT
+              : "#E8EDF7";
         context.fillText(title, labelX, labelY);
       }
     });
@@ -290,19 +438,21 @@ export default function GraphCanvas({
     data.nodes,
     degreeLeaders,
     hoveredIndex,
+    isolateRootIndex,
+    localGraph,
+    positionFor,
+    renderIndices,
+    renderMask,
     selectedIndex,
     size,
     transform,
-    visibleIndices,
-    visibleMask,
     worldToScreen,
   ]);
 
   const updateZoom = useCallback(
-    (nextZoom: number, anchor?: Point) => {
-      const clamped = Math.max(0.35, Math.min(8, nextZoom));
+    (nextZoom: number, anchor: Point) => {
+      const clamped = Math.max(0.12, Math.min(MAX_ZOOM, nextZoom));
       setTransform((current) => {
-        if (!anchor) return { ...current, zoom: clamped };
         const worldX =
           (anchor.x - size.width / 2 - current.panX) /
           (baseScale * current.zoom);
@@ -328,13 +478,18 @@ export default function GraphCanvas({
       resetView();
       return;
     }
-    const node = data.nodes[selectedIndex];
+    const position = positionFor(selectedIndex);
     setTransform({
-      zoom: 2.35,
-      panX: -node.x * baseScale * 2.35,
-      panY: -node.y * baseScale * 2.35,
+      zoom: 3.2,
+      panX: -position.x * baseScale * 3.2,
+      panY: -position.y * baseScale * 3.2,
     });
-  }, [baseScale, data.nodes, resetView, selectedIndex]);
+  }, [baseScale, positionFor, resetView, selectedIndex]);
+
+  const centerAnchor = {
+    x: size.width / 2,
+    y: size.height / 2,
+  };
 
   return (
     <div className="graph-canvas-shell" ref={shellRef}>
@@ -394,7 +549,7 @@ export default function GraphCanvas({
         onWheel={(event) => {
           event.preventDefault();
           const bounds = event.currentTarget.getBoundingClientRect();
-          const factor = event.deltaY > 0 ? 0.88 : 1.14;
+          const factor = Math.exp(-event.deltaY * 0.0016);
           updateZoom(transform.zoom * factor, {
             x: event.clientX - bounds.left,
             y: event.clientY - bounds.top,
@@ -405,15 +560,60 @@ export default function GraphCanvas({
 
       <div className="graph-status" aria-live="polite">
         <span className="status-dot" />
-        {visibleIndices.length.toLocaleString("zh-CN")} /{" "}
-        {data.nodes.length.toLocaleString("zh-CN")} 篇文献
+        {localGraph ? (
+          <>
+            Local map · {renderIndices.length.toLocaleString("zh-CN")} papers
+            {localGraph.truncated ? " · top 2,800 shown" : ""}
+          </>
+        ) : (
+          <>
+            {renderIndices.length.toLocaleString("zh-CN")} /{" "}
+            {data.nodes.length.toLocaleString("zh-CN")} 篇文献
+          </>
+        )}
       </div>
+
+      {localGraph && isolateRootIndex != null && (
+        <div className="local-graph-toolbar">
+          <div>
+            <strong>Local citation map</strong>
+            <span>{data.nodes[isolateRootIndex].title}</span>
+          </div>
+          <div className="local-depth-switch" aria-label="局部关系深度">
+            <button
+              aria-pressed={isolateDepth === 1}
+              className={isolateDepth === 1 ? "is-active" : ""}
+              onClick={() => onIsolateDepthChange(1)}
+              type="button"
+            >
+              1-hop
+            </button>
+            <button
+              aria-pressed={isolateDepth === 2}
+              className={isolateDepth === 2 ? "is-active" : ""}
+              onClick={() => onIsolateDepthChange(2)}
+              type="button"
+            >
+              2-hop
+            </button>
+          </div>
+          <button
+            aria-label="退出局部星图"
+            className="icon-button"
+            onClick={onExitIsolate}
+            title="返回完整星图"
+            type="button"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       <div className="canvas-controls" aria-label="星图视图控制">
         <button
           aria-label="放大"
           className="icon-button"
-          onClick={() => updateZoom(transform.zoom * 1.24)}
+          onClick={() => updateZoom(transform.zoom * 1.45, centerAnchor)}
           title="放大"
           type="button"
         >
@@ -422,7 +622,7 @@ export default function GraphCanvas({
         <button
           aria-label="缩小"
           className="icon-button"
-          onClick={() => updateZoom(transform.zoom * 0.8)}
+          onClick={() => updateZoom(transform.zoom / 1.45, centerAnchor)}
           title="缩小"
           type="button"
         >
@@ -449,7 +649,9 @@ export default function GraphCanvas({
         </button>
       </div>
 
-      <div className="canvas-help">拖拽平移 · 滚轮缩放 · 点击查看文献</div>
+      <div className="canvas-help">
+        拖拽平移 · 滚轮连续缩放 · 点击查看文献
+      </div>
     </div>
   );
 }

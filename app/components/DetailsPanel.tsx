@@ -6,6 +6,7 @@ import {
   BookOpenText,
   ExternalLink,
   GitCommitHorizontal,
+  Network,
   X,
 } from "lucide-react";
 import { useMemo } from "react";
@@ -19,15 +20,19 @@ import type { GraphData } from "../types";
 
 type Props = {
   data: GraphData;
+  isIsolatedRoot: boolean;
   selectedIndex: number | null;
   onClose: () => void;
+  onIsolate: (index: number) => void;
   onSelect: (index: number) => void;
 };
 
 export default function DetailsPanel({
   data,
+  isIsolatedRoot,
   selectedIndex,
   onClose,
+  onIsolate,
   onSelect,
 }: Props) {
   const relations = useMemo(() => {
@@ -88,18 +93,37 @@ export default function DetailsPanel({
 
         <div className="details-metrics">
           <div>
-            <span>网络连接</span>
+            <span>Graph degree</span>
             <strong>{formatNumber(nodeDegree(node))}</strong>
           </div>
           <div>
-            <span>OpenAlex 被引</span>
+            <span>Cited by (OpenAlex)</span>
             <strong>{formatNumber(node.citations)}</strong>
           </div>
           <div>
-            <span>参考文献</span>
+            <span>References</span>
             <strong>{formatNumber(node.references)}</strong>
           </div>
         </div>
+
+        <button
+          className="isolate-map-button"
+          onClick={() => onIsolate(selectedIndex)}
+          type="button"
+        >
+          <Network size={17} />
+          <span>
+            <strong>
+              {isIsolatedRoot
+                ? "Return to full graph"
+                : "Open local citation map"}
+            </strong>
+            <small>
+              {isIsolatedRoot ? "Exit local mode" : "Explore 1-hop / 2-hop relations"}
+            </small>
+          </span>
+          <ArrowUpRight size={15} />
+        </button>
 
         {(externalUrl || openAlexUrl) && (
           <div className="external-actions">

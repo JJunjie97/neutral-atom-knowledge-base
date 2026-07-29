@@ -161,7 +161,7 @@ export default function TimelineView({
           </div>
           <div>
             <h3>年度关键文献</h3>
-            <p>按核心网络连接度与 OpenAlex 被引数排序</p>
+            <p>Ranked by graph degree, then OpenAlex cited-by count</p>
           </div>
         </div>
 
@@ -192,7 +192,7 @@ export default function TimelineView({
                     </small>
                   </span>
                   <span className="paper-metrics">
-                    <small>网络连接</small>
+                    <small>Graph degree</small>
                     <strong>{formatNumber(nodeDegree(node))}</strong>
                   </span>
                   <ArrowRight size={16} />
@@ -201,7 +201,7 @@ export default function TimelineView({
             })}
             {yearPapers.length > 80 && (
               <p className="list-limit-note">
-                已显示连接度最高的 80 篇；继续使用左侧筛选器缩小范围。
+                Showing the top 80 papers by graph degree; narrow the filters to see more.
               </p>
             )}
           </div>
