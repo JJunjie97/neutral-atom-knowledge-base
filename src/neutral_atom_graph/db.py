@@ -170,6 +170,54 @@ CREATE TABLE IF NOT EXISTS metadata_candidates (
 );
 CREATE INDEX IF NOT EXISTS idx_metadata_candidates_work
     ON metadata_candidates(work_id,status);
+
+CREATE TABLE IF NOT EXISTS taxonomy_definitions (
+    taxonomy_version TEXT PRIMARY KEY,
+    taxonomy_digest TEXT NOT NULL,
+    definition_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS review_mentions (
+    mention_id TEXT PRIMARY KEY,
+    review_id TEXT NOT NULL,
+    work_id INTEGER REFERENCES works(work_id) ON DELETE SET NULL,
+    bib_key TEXT NOT NULL,
+    source_file TEXT NOT NULL,
+    section_path_json TEXT NOT NULL DEFAULT '[]',
+    context_text TEXT NOT NULL,
+    citation_command TEXT NOT NULL,
+    line_number INTEGER NOT NULL,
+    char_start INTEGER NOT NULL,
+    char_end INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(review_id,source_file,char_start,bib_key)
+);
+CREATE INDEX IF NOT EXISTS idx_review_mentions_work
+    ON review_mentions(work_id);
+CREATE INDEX IF NOT EXISTS idx_review_mentions_review
+    ON review_mentions(review_id,bib_key);
+
+CREATE TABLE IF NOT EXISTS work_classifications (
+    work_id INTEGER NOT NULL REFERENCES works(work_id) ON DELETE CASCADE,
+    taxonomy_version TEXT NOT NULL,
+    taxonomy_digest TEXT NOT NULL,
+    dimension_id TEXT NOT NULL,
+    category_id TEXT NOT NULL,
+    method TEXT NOT NULL,
+    confidence REAL,
+    evidence_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (
+      work_id,taxonomy_version,dimension_id,category_id,method
+    )
+);
+CREATE INDEX IF NOT EXISTS idx_work_classifications_facet
+    ON work_classifications(taxonomy_version,dimension_id,category_id);
+CREATE INDEX IF NOT EXISTS idx_work_classifications_work
+    ON work_classifications(work_id);
 """
 
 
@@ -360,6 +408,25 @@ class LiteratureDB:
         )
         self.conn.execute(
             "UPDATE documents SET work_id=? WHERE work_id=?", (keep_id, remove_id)
+        )
+        self.conn.execute(
+            "UPDATE review_mentions SET work_id=? WHERE work_id=?",
+            (keep_id, remove_id),
+        )
+        self.conn.execute(
+            """
+            INSERT OR IGNORE INTO work_classifications(
+              work_id,taxonomy_version,taxonomy_digest,dimension_id,
+              category_id,method,confidence,evidence_json,created_at,updated_at
+            )
+            SELECT ?,taxonomy_version,taxonomy_digest,dimension_id,
+                   category_id,method,confidence,evidence_json,created_at,updated_at
+            FROM work_classifications WHERE work_id=?
+            """,
+            (keep_id, remove_id),
+        )
+        self.conn.execute(
+            "DELETE FROM work_classifications WHERE work_id=?", (remove_id,)
         )
         statuses = self.conn.execute(
             "SELECT * FROM fetch_status WHERE work_id=?", (remove_id,)
@@ -972,6 +1039,12 @@ class LiteratureDB:
                 "WHERE kind='markdown' AND status='available'"
             ),
             "document_chunks": "SELECT COUNT(*) FROM document_chunks",
+            "review_mentions": "SELECT COUNT(*) FROM review_mentions",
+            "work_classifications": "SELECT COUNT(*) FROM work_classifications",
+            "classified_works": (
+                "SELECT COUNT(DISTINCT work_id) FROM work_classifications"
+            ),
+            "taxonomy_versions": "SELECT COUNT(*) FROM taxonomy_definitions",
         }
         for name, query in queries.items():
             scalar[name] = int(self.conn.execute(query).fetchone()[0])

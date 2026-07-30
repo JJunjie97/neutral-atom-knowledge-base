@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .db import LiteratureDB, utc_now
+from .facets import compact_classification_rows, taxonomy_manifest
 
 
 def _json(value: str | None, default: Any) -> Any:
@@ -74,10 +75,23 @@ def _graph_rows(db: LiteratureDB) -> tuple[list[dict[str, Any]], list[dict[str, 
             degree[key[1]]["in"] += 1
         edge_groups[key]["providers"].append(row["provider"])
 
+    classification_by_work = compact_classification_rows(
+        db, (int(row["work_id"]) for row in work_rows)
+    )
     nodes: list[dict[str, Any]] = []
     for row in work_rows:
         work_id = int(row["work_id"])
         seed = seed_info.get(work_id, {})
+        classification_evidence = classification_by_work.get(work_id, [])
+        facets: dict[str, list[str]] = defaultdict(list)
+        for assignment in classification_evidence:
+            category = assignment["category"]
+            if category not in facets[assignment["dimension"]]:
+                facets[assignment["dimension"]].append(category)
+        compact_facets = {
+            dimension: sorted(categories)
+            for dimension, categories in sorted(facets.items())
+        }
         nodes.append(
             {
                 "id": row["canonical_id"],
@@ -108,6 +122,8 @@ def _graph_rows(db: LiteratureDB) -> tuple[list[dict[str, Any]], list[dict[str, 
                 "identifiers": dict(aliases[work_id]),
                 "in_degree": degree[work_id]["in"],
                 "out_degree": degree[work_id]["out"],
+                "facets": compact_facets,
+                "classification_evidence": classification_evidence,
             }
         )
     return nodes, list(edge_groups.values())
@@ -186,19 +202,43 @@ def export_graph(db: LiteratureDB, out_dir: str | Path) -> dict[str, Any]:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     nodes, edges = _graph_rows(db)
+    classified_work_count = sum(bool(node.get("facets")) for node in nodes)
+    tag_count = sum(
+        len(categories)
+        for node in nodes
+        for categories in node.get("facets", {}).values()
+    )
     meta = {
         "generated_at": utc_now(),
         "node_count": len(nodes),
         "edge_count": len(edges),
         "seed_node_count": sum(node["is_seed"] for node in nodes),
         "seed_to_seed_edge_count": sum(edge["seed_to_seed"] for edge in edges),
+        "classified_work_count": classified_work_count,
+        "tag_count": tag_count,
+        "classification_coverage": (
+            round(classified_work_count / len(nodes), 6) if nodes else 0.0
+        ),
     }
-    graph = {"meta": meta, "nodes": nodes, "edges": edges}
+    taxonomy = taxonomy_manifest(db)
+    graph = {
+        "meta": meta,
+        "taxonomy": taxonomy,
+        "nodes": nodes,
+        "edges": edges,
+    }
     (out / "graph.json").write_text(
         json.dumps(graph, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
     seed_ids = {node["id"] for node in nodes if node["is_seed"]}
+    seed_nodes = [node for node in nodes if node["id"] in seed_ids]
+    seed_classified = sum(bool(node.get("facets")) for node in seed_nodes)
+    seed_tags = sum(
+        len(categories)
+        for node in seed_nodes
+        for categories in node.get("facets", {}).values()
+    )
     seed_graph = {
         "meta": {
             **meta,
@@ -208,8 +248,14 @@ def export_graph(db: LiteratureDB, out_dir: str | Path) -> dict[str, Any]:
                 edge["source"] in seed_ids and edge["target"] in seed_ids
                 for edge in edges
             ),
+            "classified_work_count": seed_classified,
+            "tag_count": seed_tags,
+            "classification_coverage": (
+                round(seed_classified / len(seed_nodes), 6) if seed_nodes else 0.0
+            ),
         },
-        "nodes": [node for node in nodes if node["id"] in seed_ids],
+        "taxonomy": taxonomy,
+        "nodes": seed_nodes,
         "edges": [
             edge
             for edge in edges
@@ -243,6 +289,8 @@ def export_graph(db: LiteratureDB, out_dir: str | Path) -> dict[str, Any]:
             "cited_in_sections",
             "in_degree",
             "out_degree",
+            "facets",
+            "classification_evidence",
         ],
     )
     _write_csv(

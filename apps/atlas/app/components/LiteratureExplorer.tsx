@@ -5,7 +5,6 @@ import {
   BookOpen,
   Clock3,
   Database,
-  Filter,
   LoaderCircle,
   Network,
   RotateCcw,
@@ -21,6 +20,7 @@ import {
 import {
   authorLine,
   formatNumber,
+  matchesFacetSelections,
   matchesSearch,
   nodeDegree,
   normalizeSearch,
@@ -38,7 +38,7 @@ import TimelineView from "./TimelineView";
 
 const INITIAL_FILTERS: GraphFilters = {
   query: "",
-  group: "all",
+  facets: {},
   minYear: 1977,
   maxYear: 2026,
   minDegree: 0,
@@ -104,6 +104,30 @@ export default function LiteratureExplorer() {
   const generatedLabel = data?.meta.generated_at
     ? new Date(data.meta.generated_at).toLocaleDateString("zh-CN")
     : "本地快照";
+  const taxonomy = data?.taxonomy ?? { version: null, dimensions: [] };
+  const facetSearchLabels = useMemo(
+    () =>
+      new Map(
+        taxonomy.dimensions.flatMap((dimension) =>
+          dimension.categories.map(
+            (category) =>
+              [
+                `${dimension.id}:${category.id}`,
+                [
+                  dimension.label_zh,
+                  dimension.label_en,
+                  category.label_zh,
+                  category.label_en,
+                  ...(category.aliases ?? []),
+                ]
+                  .filter(Boolean)
+                  .join(" "),
+              ] as const,
+          ),
+        ),
+      ),
+    [taxonomy],
+  );
 
   const nodeIndexById = useMemo(
     () =>
@@ -124,9 +148,7 @@ export default function LiteratureExplorer() {
       if (!filters.includeUnresolvedMetadata && node.titleMissing) {
         return indices;
       }
-      if (filters.group !== "all" && node.group !== filters.group) {
-        return indices;
-      }
+      if (!matchesFacetSelections(node, filters.facets)) return indices;
       if (
         node.year == null
           ? !filters.includeUnknownYear
@@ -135,11 +157,11 @@ export default function LiteratureExplorer() {
         return indices;
       }
       if (nodeDegree(node) < filters.minDegree) return indices;
-      if (!matchesSearch(node, query)) return indices;
+      if (!matchesSearch(node, query, facetSearchLabels)) return indices;
       indices.push(index);
       return indices;
     }, []);
-  }, [data, deferredQuery, filters]);
+  }, [data, deferredQuery, facetSearchLabels, filters]);
 
   const searchResults = useMemo(() => {
     if (!data || deferredQuery.trim().length < 2) return [];
@@ -186,6 +208,22 @@ export default function LiteratureExplorer() {
     value: GraphFilters[Key],
   ) {
     setFilters((current) => ({ ...current, [key]: value }));
+  }
+  function toggleFacet(dimensionId: string, categoryId: string) {
+    setFilters((current) => {
+      const selected = current.facets[dimensionId] ?? [];
+      const nextSelected = selected.includes(categoryId)
+        ? selected.filter((id) => id !== categoryId)
+        : [...selected, categoryId];
+      const facets = { ...current.facets };
+      if (nextSelected.length) facets[dimensionId] = nextSelected;
+      else delete facets[dimensionId];
+      return { ...current, facets };
+    });
+  }
+
+  function clearFacets() {
+    setFilters((current) => ({ ...current, facets: {} }));
   }
 
   function selectIndex(index: number | null) {
@@ -343,57 +381,13 @@ export default function LiteratureExplorer() {
             )}
           </section>
 
-          <section className="filter-section">
-            <div className="filter-section-heading">
-              <span>
-                <Filter size={14} />
-                主题章节
-              </span>
-              <small>
-                {filters.group === "all"
-                  ? "全部"
-                  : data.sections.find(
-                      (section) => section.id === filters.group,
-                    )?.short}
-              </small>
-            </div>
-            <div className="topic-filter-list">
-              <button
-                className={filters.group === "all" ? "is-active" : ""}
-                onClick={() => updateFilter("group", "all")}
-                type="button"
-              >
-                <span className="legend-swatch all-groups" />
-                <span>全部主题</span>
-                <small>{formatNumber(data.nodes.length)}</small>
-              </button>
-              {data.sections
-                .filter(
-                  (section) =>
-                    (data.meta.sectionCounts[section.id] ?? 0) > 0,
-                )
-                .map((section) => (
-                  <button
-                    className={
-                      filters.group === section.id ? "is-active" : ""
-                    }
-                    key={section.id}
-                    onClick={() => updateFilter("group", section.id)}
-                    type="button"
-                  >
-                    <span
-                      className="legend-swatch"
-                      style={{ background: section.color }}
-                    />
-                    <span>{section.label}</span>
-                    <small>
-                      {formatNumber(data.meta.sectionCounts[section.id] ?? 0)}
-                    </small>
-                  </button>
-                ))}
-            </div>
-          </section>
-
+          <FacetFilterPanel
+            facetCounts={data.meta.facetCounts ?? {}}
+            onClearAll={clearFacets}
+            onToggle={toggleFacet}
+            selections={filters.facets}
+            taxonomy={taxonomy}
+          />
           <section className="filter-section">
             <div className="filter-section-heading">
               <span>发表年份</span>
@@ -539,6 +533,7 @@ export default function LiteratureExplorer() {
               selectedId != null && selectedId === isolateRootId
             }
             onClose={() => setSelectedId(null)}
+            onFacetSelect={toggleFacet}
             onIsolate={toggleLocalGraph}
             onSelect={(index) => selectIndex(index)}
             selectedIndex={selectedIndex}

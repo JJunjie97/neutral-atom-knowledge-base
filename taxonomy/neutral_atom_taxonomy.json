@@ -1,0 +1,2367 @@
+{
+  "version": "2026.07.30.1",
+  "field_weights": {
+    "manual": 1.0,
+    "review_context": 0.94,
+    "review_section": 0.9,
+    "title": 0.88,
+    "abstract": 0.82,
+    "topics": 0.65,
+    "venue": 0.25,
+    "work_type": 0.55
+  },
+  "dimensions": [
+    {
+      "id": "review_domain",
+      "label_en": "Review domain",
+      "label_zh": "综述主领域",
+      "description_en": "Broad domain assigned only from the top-level section in which the review cites a work.",
+      "description_zh": "仅根据综述引用所在的一级章节赋予的粗粒度领域标签。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "practical_quantum_advantage",
+          "label_en": "Practical quantum advantage",
+          "label_zh": "实用量子优势",
+          "rules": [
+            {
+              "id": "review_domain.advantage.section",
+              "fields": ["review_section"],
+              "sections": ["Defining Practical Quantum Advantage"],
+              "match": "any",
+              "confidence": 0.98
+            }
+          ]
+        },
+        {
+          "id": "atomic_hardware",
+          "label_en": "Neutral-atom processor hardware",
+          "label_zh": "中性原子处理器硬件",
+          "rules": [
+            {
+              "id": "review_domain.hardware.section",
+              "fields": ["review_section"],
+              "sections": ["Neutral Atom Quantum Processor Hardware"],
+              "match": "any",
+              "confidence": 0.98
+            }
+          ]
+        },
+        {
+          "id": "photonic_control",
+          "label_en": "Scalable photonic control",
+          "label_zh": "可扩展光子控制",
+          "rules": [
+            {
+              "id": "review_domain.photonics.section",
+              "fields": ["review_section"],
+              "sections": ["Scalable Photonic Control Technologies"],
+              "match": "any",
+              "confidence": 0.98
+            }
+          ]
+        },
+        {
+          "id": "quantum_error_correction",
+          "label_en": "Quantum error correction",
+          "label_zh": "量子纠错",
+          "rules": [
+            {
+              "id": "review_domain.qec.section",
+              "fields": ["review_section"],
+              "sections": ["Quantum Error Correction"],
+              "match": "any",
+              "confidence": 0.98
+            }
+          ]
+        },
+        {
+          "id": "quantum_compilation",
+          "label_en": "Quantum compilation",
+          "label_zh": "量子编译",
+          "rules": [
+            {
+              "id": "review_domain.compilation.section",
+              "fields": ["review_section"],
+              "sections": ["Compilation of Quantum Circuits"],
+              "match": "any",
+              "confidence": 0.98
+            }
+          ]
+        },
+        {
+          "id": "quantum_networking",
+          "label_en": "Quantum networking",
+          "label_zh": "量子网络",
+          "rules": [
+            {
+              "id": "review_domain.networking.section",
+              "fields": ["review_section"],
+              "sections": ["Networking Quantum Processors"],
+              "match": "any",
+              "confidence": 0.98
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "atomic_element",
+      "label_en": "Atomic element",
+      "label_zh": "原子元素",
+      "description_en": "Atomic species explicitly named in metadata or citation context. This facet is independent of whether the platform is neutral-atom or trapped-ion.",
+      "description_zh": "在元数据或引用语境中明确出现的原子元素；该维度与中性原子或离子平台维度相互独立。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "rubidium",
+          "label_en": "Rubidium (Rb)",
+          "label_zh": "铷（Rb）",
+          "rules": [
+            {
+              "id": "atomic_element.rubidium.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["rubidium"],
+              "regex": ["\\bRb\\b"],
+              "match": "any",
+              "confidence": 0.93
+            }
+          ]
+        },
+        {
+          "id": "cesium",
+          "label_en": "Cesium (Cs)",
+          "label_zh": "铯（Cs）",
+          "rules": [
+            {
+              "id": "atomic_element.cesium.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["cesium", "caesium"],
+              "regex": ["\\bCs\\b"],
+              "match": "any",
+              "confidence": 0.93
+            }
+          ]
+        },
+        {
+          "id": "strontium",
+          "label_en": "Strontium (Sr)",
+          "label_zh": "锶（Sr）",
+          "rules": [
+            {
+              "id": "atomic_element.strontium.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["strontium"],
+              "regex": ["\\bSr\\b"],
+              "match": "any",
+              "confidence": 0.93
+            }
+          ]
+        },
+        {
+          "id": "ytterbium",
+          "label_en": "Ytterbium (Yb)",
+          "label_zh": "镱（Yb）",
+          "rules": [
+            {
+              "id": "atomic_element.ytterbium.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["ytterbium"],
+              "regex": ["\\bYb\\b"],
+              "match": "any",
+              "confidence": 0.93
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "isotope",
+      "label_en": "Atomic isotope",
+      "label_zh": "原子同位素",
+      "description_en": "Explicit isotope mentions in common prose, hyphenated, compact, or LaTeX-derived forms.",
+      "description_zh": "从普通文本、连字符、紧凑写法或 LaTeX 清洗后的写法中识别明确的同位素。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "rb85",
+          "label_en": "Rubidium-85",
+          "label_zh": "铷-85",
+          "rules": [
+            {
+              "id": "isotope.rb85.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "regex": ["(?:\\b85\\s*Rb\\b|\\bRb[- ]?85\\b|\\brubidium[- ]?85\\b)"],
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "rb87",
+          "label_en": "Rubidium-87",
+          "label_zh": "铷-87",
+          "rules": [
+            {
+              "id": "isotope.rb87.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "regex": ["(?:\\b87\\s*Rb\\b|\\bRb[- ]?87\\b|\\brubidium[- ]?87\\b)"],
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "cs133",
+          "label_en": "Cesium-133",
+          "label_zh": "铯-133",
+          "rules": [
+            {
+              "id": "isotope.cs133.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "regex": ["(?:\\b133\\s*Cs\\b|\\bCs[- ]?133\\b|\\b(?:cesium|caesium)[- ]?133\\b)"],
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "sr87",
+          "label_en": "Strontium-87",
+          "label_zh": "锶-87",
+          "rules": [
+            {
+              "id": "isotope.sr87.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "regex": ["(?:\\b87\\s*Sr\\b|\\bSr[- ]?87\\b|\\bstrontium[- ]?87\\b)"],
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "sr88",
+          "label_en": "Strontium-88",
+          "label_zh": "锶-88",
+          "rules": [
+            {
+              "id": "isotope.sr88.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "regex": ["(?:\\b88\\s*Sr\\b|\\bSr[- ]?88\\b|\\bstrontium[- ]?88\\b)"],
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "yb171",
+          "label_en": "Ytterbium-171",
+          "label_zh": "镱-171",
+          "rules": [
+            {
+              "id": "isotope.yb171.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "regex": ["(?:\\b171\\s*Yb\\b|\\bYb[- ]?171\\b|\\bytterbium[- ]?171\\b)"],
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "yb174",
+          "label_en": "Ytterbium-174",
+          "label_zh": "镱-174",
+          "rules": [
+            {
+              "id": "isotope.yb174.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "regex": ["(?:\\b174\\s*Yb\\b|\\bYb[- ]?174\\b|\\bytterbium[- ]?174\\b)"],
+              "confidence": 0.97
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "physical_platform",
+      "label_en": "Physical platform",
+      "label_zh": "物理平台",
+      "description_en": "Hardware modality inferred only from title, abstract, and provider topics to avoid cross-platform contamination from review comparisons.",
+      "description_zh": "仅由题目、摘要和主题元数据判断硬件模态，避免综述跨平台比较语句造成污染。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "neutral_atom",
+          "label_en": "Neutral atom",
+          "label_zh": "中性原子",
+          "rules": [
+            {
+              "id": "physical_platform.neutral_atom.metadata",
+              "fields": ["title", "abstract", "topics"],
+              "keywords": ["neutral atom", "neutral-atom"],
+              "regex": ["(?:Rydberg atom|atom-array|atomic array|optical tweezer array)"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "trapped_ion",
+          "label_en": "Trapped ion",
+          "label_zh": "离子阱",
+          "rules": [
+            {
+              "id": "physical_platform.trapped_ion.metadata",
+              "fields": ["title", "abstract", "topics"],
+              "keywords": ["trapped ion", "trapped-ion", "ion trap"],
+              "regex": ["\\b(?:atomic|optical) ions?\\b"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "superconducting",
+          "label_en": "Superconducting circuit",
+          "label_zh": "超导量子电路",
+          "rules": [
+            {
+              "id": "physical_platform.superconducting.metadata",
+              "fields": ["title", "abstract", "topics"],
+              "keywords": ["superconducting qubit", "superconducting quantum processor", "transmon"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "photonic_quantum_computing",
+          "label_en": "Photonic quantum computing",
+          "label_zh": "光量子计算",
+          "rules": [
+            {
+              "id": "physical_platform.photonic.metadata",
+              "fields": ["title", "abstract", "topics"],
+              "keywords": ["photonic quantum computer", "photonic quantum computing", "boson sampling", "photonic qubit"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "solid_state_spin",
+          "label_en": "Solid-state spin or color center",
+          "label_zh": "固态自旋或色心",
+          "rules": [
+            {
+              "id": "physical_platform.solid_state_spin.metadata",
+              "fields": ["title", "abstract", "topics"],
+              "keywords": ["silicon-vacancy", "silicon vacancy", "nitrogen-vacancy", "nitrogen vacancy", "color center", "quantum dot spin"],
+              "regex": ["\\b(?:SiV|NV)[- ]?center\\b"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "hybrid_interconnect",
+          "label_en": "Hybrid or heterogeneous interconnect",
+          "label_zh": "混合或异构互连",
+          "rules": [
+            {
+              "id": "physical_platform.hybrid_interconnect.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["hybrid quantum network", "heterogeneous quantum network", "disparate quantum systems", "cross-platform quantum network"],
+              "match": "any",
+              "confidence": 0.88
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "qubit_encoding",
+      "label_en": "Qubit encoding",
+      "label_zh": "量子比特编码",
+      "description_en": "Electronic, nuclear, optical, motional, or multilevel encodings explicitly described as qubits or encoded states.",
+      "description_zh": "被明确描述为量子比特或编码态的电子、核自旋、光学、运动或多能级编码。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "ground_hyperfine",
+          "label_en": "Ground-state hyperfine qubit",
+          "label_zh": "基态超精细量子比特",
+          "rules": [
+            {
+              "id": "qubit_encoding.hyperfine.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:hyperfine (?:ground[- ]state )?(?:qubit|encoding|manifold)|qubit encoded in (?:the )?hyperfine)"],
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "nuclear_spin",
+          "label_en": "Nuclear-spin qubit",
+          "label_zh": "核自旋量子比特",
+          "rules": [
+            {
+              "id": "qubit_encoding.nuclear_spin.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["nuclear[- ]spin (?:qubit|encoding|state|memory)"],
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "optical_clock",
+          "label_en": "Optical-clock qubit",
+          "label_zh": "光钟量子比特",
+          "rules": [
+            {
+              "id": "qubit_encoding.optical_clock.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:optical[- ]clock (?:qubit|encoding)|clock[- ]state qubit|qubit encoded (?:on|in) (?:an )?optical clock transition)"],
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "omg",
+          "label_en": "Optical-metastable-ground (OMG)",
+          "label_zh": "光学-亚稳态-基态（OMG）编码",
+          "rules": [
+            {
+              "id": "qubit_encoding.omg.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["OMG architecture", "optical, metastable, ground", "optical-metastable-ground"],
+              "match": "any",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "metastable_fine_structure",
+          "label_en": "Metastable fine-structure qubit",
+          "label_zh": "亚稳精细结构量子比特",
+          "rules": [
+            {
+              "id": "qubit_encoding.metastable_fine_structure.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["metastable fine-structure qubit", "fine-structure qubit", "FS qubit"],
+              "regex": ["(?:qubit|encoding).{0,60}(?:3P0|3P_0).{0,30}(?:3P2|3P_2)"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "zeeman_or_magic_field",
+          "label_en": "Zeeman or magic-field qubit",
+          "label_zh": "塞曼或魔术磁场量子比特",
+          "rules": [
+            {
+              "id": "qubit_encoding.zeeman_magic.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:Zeeman[- ]state qubit|magnetically insensitive (?:state|qubit)|magic[- ]field qubit|magic qubit)"],
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "motional",
+          "label_en": "Motional qubit",
+          "label_zh": "运动量子比特",
+          "rules": [
+            {
+              "id": "qubit_encoding.motional.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["motional qubit", "motional-state encoding", "motional qubit encoding"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "qudit_or_ququart",
+          "label_en": "Qudit or ququart",
+          "label_zh": "量子多能级或四能级编码",
+          "rules": [
+            {
+              "id": "qubit_encoding.qudit.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["qudit", "ququart", "multilevel qubit encoding", "multi-level qubit encoding"],
+              "match": "any",
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "id": "circular_rydberg",
+          "label_en": "Circular Rydberg encoding",
+          "label_zh": "圆形里德堡态编码",
+          "rules": [
+            {
+              "id": "qubit_encoding.circular_rydberg.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["circular Rydberg state", "circular Rydberg qubit"],
+              "match": "any",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "explicit_rydberg_state",
+          "label_en": "Rydberg-state qubit",
+          "label_zh": "里德堡态量子比特",
+          "description_en": "Requires explicit qubit/encoding language; a generic mention of Rydberg excitation is intentionally insufficient.",
+          "description_zh": "必须明确出现量子比特或编码表述；普通里德堡激发不会触发该标签。",
+          "rules": [
+            {
+              "id": "qubit_encoding.explicit_rydberg.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:Rydberg[- ]state qubit|Rydberg qubit|qubit encoded.{0,40}(?:in|using) (?:a )?Rydberg state)"],
+              "confidence": 0.96
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "platform_architecture",
+      "label_en": "Platform architecture",
+      "label_zh": "平台架构",
+      "description_en": "Array geometry, trapping architecture, species composition, and functional zoning.",
+      "description_zh": "阵列几何、俘获架构、物种组成和功能分区。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "optical_tweezer_array",
+          "label_en": "Optical-tweezer array",
+          "label_zh": "光镊阵列",
+          "rules": [
+            {
+              "id": "platform_architecture.tweezer.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "regex": ["(?:optical[- ]tweezer array|tweezer[- ]trap array|array of optical tweezers)"],
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "optical_lattice",
+          "label_en": "Optical lattice",
+          "label_zh": "光晶格",
+          "rules": [
+            {
+              "id": "platform_architecture.lattice.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["optical lattice", "lattice-trapped atoms"],
+              "match": "any",
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "id": "hybrid_lattice_tweezer",
+          "label_en": "Hybrid lattice-tweezer architecture",
+          "label_zh": "光晶格-光镊混合架构",
+          "rules": [
+            {
+              "id": "platform_architecture.hybrid_lattice_tweezer.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["optical lattice", "optical tweezer"],
+              "match": "all",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "two_dimensional_array",
+          "label_en": "Two-dimensional array",
+          "label_zh": "二维阵列",
+          "rules": [
+            {
+              "id": "platform_architecture.2d.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:\\b2D\\b|two-dimensional).{0,40}(?:atom|atomic|qubit|tweezer|array|lattice)"],
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "three_dimensional_array",
+          "label_en": "Three-dimensional array",
+          "label_zh": "三维阵列",
+          "rules": [
+            {
+              "id": "platform_architecture.3d.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:\\b3D\\b|three-dimensional).{0,40}(?:atom|atomic|qubit|tweezer|array|lattice|geometry|Talbot)"],
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "dual_species",
+          "label_en": "Dual-species or dual-isotope array",
+          "label_zh": "双物种或双同位素阵列",
+          "rules": [
+            {
+              "id": "platform_architecture.dual_species.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["dual-species", "dual species", "dual-isotope", "two-species atom array", "interspecies gate"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "zone_based",
+          "label_en": "Zone-based architecture",
+          "label_zh": "分区式架构",
+          "rules": [
+            {
+              "id": "platform_architecture.zone_based.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["zone-based architecture", "zoned architecture"],
+              "regex": ["(?:storage|entanglement|readout|reloading) zone"],
+              "match": "any",
+              "confidence": 0.89
+            }
+          ]
+        },
+        {
+          "id": "cavity_integrated",
+          "label_en": "Cavity-integrated atom array",
+          "label_zh": "腔集成原子阵列",
+          "rules": [
+            {
+              "id": "platform_architecture.cavity_integrated.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:atom|atomic|tweezer) array.{0,80}(?:optical |fiber |nanophotonic )?cavit|cavit.{0,80}(?:atom|atomic|tweezer) array"],
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "id": "transportable_modular_array",
+          "label_en": "Transportable or modular atom array",
+          "label_zh": "可输运或模块化原子阵列",
+          "rules": [
+            {
+              "id": "platform_architecture.transportable.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["transportable atom array", "modular atom array", "array of arrays", "fly-by Rydberg gate"],
+              "match": "any",
+              "confidence": 0.93
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "computing_mode",
+      "label_en": "Computing mode",
+      "label_zh": "计算模式",
+      "description_en": "Digital, analog, hybrid, or fault-tolerant logical operation.",
+      "description_zh": "数字、模拟、混合或容错逻辑运行模式。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "digital_gate_based",
+          "label_en": "Digital gate-based",
+          "label_zh": "数字门模型",
+          "rules": [
+            {
+              "id": "computing_mode.digital.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["digital quantum computation", "digital quantum circuit", "gate-based quantum computing"],
+              "match": "any",
+              "confidence": 0.89
+            }
+          ]
+        },
+        {
+          "id": "analog_quantum_simulation",
+          "label_en": "Analog quantum simulation",
+          "label_zh": "模拟量子仿真",
+          "rules": [
+            {
+              "id": "computing_mode.analog.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["analog quantum simulation", "analogue quantum simulation", "analog quantum simulator", "analog evolution"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "hybrid_analog_digital",
+          "label_en": "Hybrid analog-digital",
+          "label_zh": "模拟-数字混合",
+          "rules": [
+            {
+              "id": "computing_mode.hybrid_analog_digital.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:hybrid |digital[- ]?)analog[-– ]digital|digital[-– ]analog|hybrid analog"],
+              "confidence": 0.93
+            }
+          ]
+        },
+        {
+          "id": "fault_tolerant_logical",
+          "label_en": "Fault-tolerant logical computing",
+          "label_zh": "容错逻辑量子计算",
+          "rules": [
+            {
+              "id": "computing_mode.fault_tolerant.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["fault-tolerant quantum computing", "fault tolerant quantum computing", "logical quantum processor", "logical qubit computation"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "interaction_and_gate",
+      "label_en": "Interaction and gate mechanism",
+      "label_zh": "相互作用与门机制",
+      "description_en": "Physical interactions and explicit quantum-gate primitives.",
+      "description_zh": "物理相互作用与明确的量子门原语。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "rydberg_blockade",
+          "label_en": "Rydberg blockade",
+          "label_zh": "里德堡阻塞",
+          "rules": [
+            {
+              "id": "interaction_and_gate.rydberg_blockade.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["Rydberg blockade", "blockade gate"],
+              "match": "any",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "rydberg_dressing",
+          "label_en": "Rydberg dressing",
+          "label_zh": "里德堡缀饰",
+          "rules": [
+            {
+              "id": "interaction_and_gate.rydberg_dressing.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "regex": ["Rydberg[- ]dress(?:ed|ing)"],
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "foerster_resonance",
+          "label_en": "Förster resonance",
+          "label_zh": "福斯特共振",
+          "rules": [
+            {
+              "id": "interaction_and_gate.foerster.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["F(?:ö|oe|o)rster resonance"],
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "dipolar_or_vdw",
+          "label_en": "Dipolar or van der Waals interaction",
+          "label_zh": "偶极或范德华相互作用",
+          "rules": [
+            {
+              "id": "interaction_and_gate.dipolar_vdw.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["dipole-dipole interaction", "dipolar interaction", "van der Waals interaction", "van-der-Waals interaction"],
+              "match": "any",
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "id": "atom_photon_cavity_qed",
+          "label_en": "Atom-photon or cavity-QED interaction",
+          "label_zh": "原子-光子或腔量子电动力学相互作用",
+          "rules": [
+            {
+              "id": "interaction_and_gate.atom_photon.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["atom-photon interaction", "atom–photon interaction", "cavity QED", "cavity quantum electrodynamics"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "single_qubit_gate",
+          "label_en": "Single-qubit gate",
+          "label_zh": "单量子比特门",
+          "rules": [
+            {
+              "id": "interaction_and_gate.single_qubit.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["single[- ]qubit (?:gate|rotation|operation)"],
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "two_qubit_entangling_gate",
+          "label_en": "Two-qubit entangling gate",
+          "label_zh": "双量子比特纠缠门",
+          "rules": [
+            {
+              "id": "interaction_and_gate.two_qubit.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:two|2)[- ]qubit (?:entangling )?gate|\\bCZ gate\\b|controlled[- ]phase gate"],
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "multi_qubit_gate",
+          "label_en": "Multi-qubit gate",
+          "label_zh": "多量子比特门",
+          "rules": [
+            {
+              "id": "interaction_and_gate.multi_qubit.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:multi[- ]qubit|N[- ]qubit|multi[- ]controlled) (?:entangling )?gate"],
+              "confidence": 0.94
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "control_and_operation",
+      "label_en": "Control and operation technique",
+      "label_zh": "控制与操作技术",
+      "description_en": "Addressing, excitation, movement, loading, cooling, and continuous-operation techniques.",
+      "description_zh": "寻址、激发、移动、装载、冷却和连续运行技术。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "individual_addressing",
+          "label_en": "Individual or site-resolved addressing",
+          "label_zh": "单点或位点分辨寻址",
+          "rules": [
+            {
+              "id": "control_and_operation.individual_addressing.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["individual addressing", "individually addressed", "individually-addressed", "site-resolved control", "local addressing"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "global_addressing",
+          "label_en": "Global addressing",
+          "label_zh": "全局寻址",
+          "rules": [
+            {
+              "id": "control_and_operation.global_addressing.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["global addressing", "globally addressed", "global control beam"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "raman_or_microwave_control",
+          "label_en": "Raman or microwave control",
+          "label_zh": "拉曼或微波控制",
+          "rules": [
+            {
+              "id": "control_and_operation.raman_microwave.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["stimulated Raman transition", "Raman qubit rotation", "microwave qubit control", "microwave-driven transition"],
+              "match": "any",
+              "confidence": 0.89
+            }
+          ]
+        },
+        {
+          "id": "rydberg_excitation",
+          "label_en": "Rydberg excitation",
+          "label_zh": "里德堡激发",
+          "rules": [
+            {
+              "id": "control_and_operation.rydberg_excitation.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:single[- ]photon|two[- ]photon|three[- ]photon)?\\s*Rydberg excitation"],
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "atom_transport",
+          "label_en": "Coherent atom transport or shuttling",
+          "label_zh": "相干原子输运或穿梭",
+          "rules": [
+            {
+              "id": "control_and_operation.transport.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["atom transport", "atomic transport", "qubit shuttling", "coherent transport", "moving optical tweezer"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "atom_rearrangement",
+          "label_en": "Atom rearrangement and sorting",
+          "label_zh": "原子重排与排序",
+          "rules": [
+            {
+              "id": "control_and_operation.rearrangement.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["atom rearrangement", "atomic rearrangement", "atom reconfiguration", "defect-free array", "atom sorting"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "continuous_reloading",
+          "label_en": "Continuous atom reloading",
+          "label_zh": "连续原子重装载",
+          "rules": [
+            {
+              "id": "control_and_operation.continuous_reloading.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["continuous reloading", "continuous atom loading", "continuously replace qubits", "fresh atom delivery"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "mot_or_reservoir_loading",
+          "label_en": "MOT or reservoir loading",
+          "label_zh": "磁光阱或储备区装载",
+          "rules": [
+            {
+              "id": "control_and_operation.mot_reservoir.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["magneto-optical trap", "2D MOT", "3D MOT", "optical lattice reservoir", "atom reservoir"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "laser_cooling",
+          "label_en": "Laser cooling",
+          "label_zh": "激光冷却",
+          "rules": [
+            {
+              "id": "control_and_operation.cooling.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["Sisyphus cooling", "resolved sideband cooling", "gray molasses", "EIT cooling", "sub-Doppler cooling"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "readout_and_noise",
+      "label_en": "Readout and noise handling",
+      "label_zh": "读出与噪声处理",
+      "description_en": "Measurement modalities and hardware-specific error channels or conversions.",
+      "description_zh": "测量方式以及硬件相关误差通道或误差转换。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "mid_circuit_measurement",
+          "label_en": "Mid-circuit measurement",
+          "label_zh": "线路中途测量",
+          "rules": [
+            {
+              "id": "readout_and_noise.mid_circuit.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["mid[- ]circuit (?:measurement|readout|detection)"],
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "fluorescence_imaging",
+          "label_en": "Fluorescence imaging or readout",
+          "label_zh": "荧光成像或读出",
+          "rules": [
+            {
+              "id": "readout_and_noise.fluorescence.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["fluorescence (?:imaging|detection|readout|measurement)"],
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "cavity_readout",
+          "label_en": "Cavity-enhanced readout",
+          "label_zh": "腔增强读出",
+          "rules": [
+            {
+              "id": "readout_and_noise.cavity.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["cavity-based readout", "cavity-enhanced readout", "cavity transmission detection"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "nondestructive_or_qnd",
+          "label_en": "Non-destructive or QND readout",
+          "label_zh": "非破坏性或量子非破坏读出",
+          "rules": [
+            {
+              "id": "readout_and_noise.qnd.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["non-destructive readout", "nondestructive readout", "quantum non-demolition measurement", "QND measurement"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "loss_resolved_erasure",
+          "label_en": "Loss-resolved or erasure readout",
+          "label_zh": "损失分辨或擦除读出",
+          "rules": [
+            {
+              "id": "readout_and_noise.loss_erasure.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["loss-resolved readout", "loss-detecting readout", "erasure conversion", "erasure error", "delayed erasure", "atom loss detection"],
+              "match": "any",
+              "confidence": 0.93
+            }
+          ]
+        },
+        {
+          "id": "collective_or_eit_readout",
+          "label_en": "Collective or Rydberg-EIT readout",
+          "label_zh": "集体效应或里德堡-EIT读出",
+          "rules": [
+            {
+              "id": "readout_and_noise.collective_eit.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["Rydberg EIT readout", "collective readout", "ensemble-assisted readout"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "simultaneous_measurement_cooling",
+          "label_en": "Simultaneous measurement and cooling",
+          "label_zh": "测量与冷却同步进行",
+          "rules": [
+            {
+              "id": "readout_and_noise.measurement_cooling.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["simultaneous state measurement and cooling", "simultaneous measurement and cooling", "readout with cooling"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "biased_dephasing",
+          "label_en": "Biased dephasing noise",
+          "label_zh": "偏置退相干噪声",
+          "rules": [
+            {
+              "id": "readout_and_noise.biased_dephasing.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["biased noise", "biased dephasing", "Z-biased noise", "dephasing-dominated noise"],
+              "match": "any",
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "id": "motional_or_recoil_error",
+          "label_en": "Motional or photon-recoil error",
+          "label_zh": "运动或光子反冲误差",
+          "rules": [
+            {
+              "id": "readout_and_noise.motional_recoil.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["recoil heating", "motional dephasing", "motion-induced error", "photon recoil error"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "crosstalk",
+          "label_en": "Control or measurement crosstalk",
+          "label_zh": "控制或测量串扰",
+          "rules": [
+            {
+              "id": "readout_and_noise.crosstalk.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["control crosstalk", "measurement crosstalk", "crosstalk-free readout", "optical crosstalk"],
+              "match": "any",
+              "confidence": 0.86
+            }
+          ]
+        },
+        {
+          "id": "blackbody_or_rydberg_decay",
+          "label_en": "Blackbody or Rydberg-decay mitigation",
+          "label_zh": "黑体辐射或里德堡衰减抑制",
+          "rules": [
+            {
+              "id": "readout_and_noise.blackbody.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["blackbody radiation decay", "black-body-radiation decay", "Rydberg lifetime enhancement", "inhibited spontaneous emission"],
+              "match": "any",
+              "confidence": 0.91
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "qec_code",
+      "label_en": "QEC code family",
+      "label_zh": "量子纠错码族",
+      "description_en": "Named quantum error-correcting code families and constructions.",
+      "description_zh": "明确命名的量子纠错码族与构造。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "surface_code",
+          "label_en": "Surface code",
+          "label_zh": "表面码",
+          "rules": [
+            {
+              "id": "qec_code.surface.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["surface code"],
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "color_code",
+          "label_en": "Color code",
+          "label_zh": "颜色码",
+          "rules": [
+            {
+              "id": "qec_code.color.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["color code", "colour code"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "qldpc",
+          "label_en": "Quantum LDPC code",
+          "label_zh": "量子低密度奇偶校验码",
+          "rules": [
+            {
+              "id": "qec_code.qldpc.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["qLDPC", "quantum LDPC", "quantum low-density parity-check"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "hypergraph_product",
+          "label_en": "Hypergraph-product code",
+          "label_zh": "超图乘积码",
+          "rules": [
+            {
+              "id": "qec_code.hypergraph_product.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["hypergraph-product code", "hypergraph product code"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "lifted_or_quasi_cyclic_product",
+          "label_en": "Lifted or quasi-cyclic product code",
+          "label_zh": "提升或准循环乘积码",
+          "rules": [
+            {
+              "id": "qec_code.lifted_product.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["lifted-product code", "lifted product code", "quasi-cyclic product code"],
+              "match": "any",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "balanced_product",
+          "label_en": "Balanced-product code",
+          "label_zh": "平衡乘积码",
+          "rules": [
+            {
+              "id": "qec_code.balanced_product.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["balanced-product code", "balanced product code"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "bivariate_bicycle",
+          "label_en": "Bivariate-bicycle code",
+          "label_zh": "双变量自行车码",
+          "rules": [
+            {
+              "id": "qec_code.bivariate_bicycle.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["bivariate bicycle code", "BB code", "Gross code"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "quantum_tanner",
+          "label_en": "Quantum Tanner code",
+          "label_zh": "量子 Tanner 码",
+          "rules": [
+            {
+              "id": "qec_code.tanner.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["quantum Tanner code"],
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "subsystem_toric",
+          "label_en": "Subsystem toric code",
+          "label_zh": "子系统环面码",
+          "rules": [
+            {
+              "id": "qec_code.subsystem_toric.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["subsystem toric code"],
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "concatenated_code",
+          "label_en": "Concatenated code",
+          "label_zh": "级联码",
+          "rules": [
+            {
+              "id": "qec_code.concatenated.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["concatenat(?:ed|ion).{0,30}(?:quantum )?(?:error[- ]correcting )?code"],
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "id": "bosonic_code",
+          "label_en": "Bosonic code",
+          "label_zh": "玻色码",
+          "rules": [
+            {
+              "id": "qec_code.bosonic.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["bosonic code", "bosonic quantum error correction"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "fermionic_code",
+          "label_en": "Fermionic code",
+          "label_zh": "费米码",
+          "rules": [
+            {
+              "id": "qec_code.fermionic.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["fermionic quantum error correction", "fermion-to-fermion code", "logical fermion code"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "qec_technique",
+      "label_en": "QEC technique",
+      "label_zh": "量子纠错技术",
+      "description_en": "Fault-tolerant logical operations, universal-gate methods, erasure handling, and modular interfaces.",
+      "description_zh": "容错逻辑操作、通用门方法、擦除处理和模块化接口。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "transversal_gate",
+          "label_en": "Transversal or fold-transversal gate",
+          "label_zh": "横向或折叠横向门",
+          "rules": [
+            {
+              "id": "qec_technique.transversal.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:fold[- ]transversal|transversal) (?:logical )?(?:gate|operation|circuit)"],
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "lattice_or_generalized_surgery",
+          "label_en": "Lattice or generalized surgery",
+          "label_zh": "晶格手术或广义手术",
+          "rules": [
+            {
+              "id": "qec_technique.surgery.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["lattice surgery", "generalized surgery", "code surgery"],
+              "match": "any",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "magic_state_distillation",
+          "label_en": "Magic-state distillation",
+          "label_zh": "魔态蒸馏",
+          "rules": [
+            {
+              "id": "qec_technique.magic_distillation.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["magic state distillation", "magic-state distillation"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "magic_state_cultivation",
+          "label_en": "Magic-state cultivation",
+          "label_zh": "魔态培育",
+          "rules": [
+            {
+              "id": "qec_technique.magic_cultivation.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["magic state cultivation", "magic-state cultivation"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "gate_teleportation",
+          "label_en": "Gate teleportation",
+          "label_zh": "门隐形传态",
+          "rules": [
+            {
+              "id": "qec_technique.gate_teleportation.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["gate teleportation", "teleported logical gate"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "homomorphic_measurement",
+          "label_en": "Homomorphic logical measurement",
+          "label_zh": "同态逻辑测量",
+          "rules": [
+            {
+              "id": "qec_technique.homomorphic.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["homomorphic logical measurement", "homomorphic measurement"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "single_shot_qec",
+          "label_en": "Single-shot QEC",
+          "label_zh": "单次量子纠错",
+          "rules": [
+            {
+              "id": "qec_technique.single_shot.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["single-shot quantum error correction", "single-shot QEC"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "erasure_aware_qec",
+          "label_en": "Erasure-aware QEC",
+          "label_zh": "擦除感知量子纠错",
+          "rules": [
+            {
+              "id": "qec_technique.erasure.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["erasure-aware decoding", "erasure error correction", "QEC with erasures", "loss-detecting error correction"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "passive_or_dissipative_qec",
+          "label_en": "Passive or dissipative QEC",
+          "label_zh": "被动或耗散量子纠错",
+          "rules": [
+            {
+              "id": "qec_technique.passive.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["passive error correction", "dissipative error correction", "autonomous quantum error correction"],
+              "match": "any",
+              "confidence": 0.93
+            }
+          ]
+        },
+        {
+          "id": "modular_direct_interface",
+          "label_en": "Direct logical modular interface",
+          "label_zh": "直接逻辑模块接口",
+          "rules": [
+            {
+              "id": "qec_technique.modular_direct.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["direct logical interface", "direct interfacing of logical qubits", "inter-module lattice surgery", "inter-module transversal gate"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "logical_entanglement_distillation",
+          "label_en": "Logical entanglement distillation",
+          "label_zh": "逻辑纠缠蒸馏",
+          "rules": [
+            {
+              "id": "qec_technique.logical_distillation.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["logical distillation", "logical Bell-pair distillation", "encoded entanglement distillation"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "heterogeneous_code_architecture",
+          "label_en": "Heterogeneous-code architecture",
+          "label_zh": "异构纠错码架构",
+          "rules": [
+            {
+              "id": "qec_technique.heterogeneous_code.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["heterogeneous code architecture", "heterogeneous-code architecture", "code conversion between modules"],
+              "match": "any",
+              "confidence": 0.91
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "decoder",
+      "label_en": "Decoder",
+      "label_zh": "译码器",
+      "description_en": "Classical algorithms and hardware used to infer corrections from syndrome data.",
+      "description_zh": "根据综合征数据推断纠错操作的经典算法与硬件。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "decoding_general",
+          "label_en": "Quantum-error decoding",
+          "label_zh": "量子纠错译码",
+          "rules": [
+            {
+              "id": "decoder.general.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "regex": ["(?:quantum|QEC|syndrome|logical)[- ]?(?:error[- ]correction )?decod(?:er|ing)"],
+              "confidence": 0.86
+            }
+          ]
+        },
+        {
+          "id": "mwpm",
+          "label_en": "Minimum-weight perfect matching",
+          "label_zh": "最小权完美匹配",
+          "rules": [
+            {
+              "id": "decoder.mwpm.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["minimum-weight perfect matching", "minimum weight perfect matching", "MWPM decoder"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "belief_propagation",
+          "label_en": "Belief-propagation decoder",
+          "label_zh": "置信传播译码器",
+          "rules": [
+            {
+              "id": "decoder.belief_propagation.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["belief-propagation decoder", "belief propagation decoder", "BP decoder"],
+              "match": "any",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "neural_or_learned",
+          "label_en": "Neural or learned decoder",
+          "label_zh": "神经网络或学习型译码器",
+          "rules": [
+            {
+              "id": "decoder.neural.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["neural decoder", "machine-learning decoder", "machine learning decoder", "Cascade decoder", "convolutional neural network decoder"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "correlated",
+          "label_en": "Correlated decoder",
+          "label_zh": "关联译码器",
+          "rules": [
+            {
+              "id": "decoder.correlated.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["correlated decoding", "correlated decoder", "multi-core circuit decoder", "MCCD"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "loss_or_erasure_aware",
+          "label_en": "Loss- or erasure-aware decoder",
+          "label_zh": "损失或擦除感知译码器",
+          "rules": [
+            {
+              "id": "decoder.loss_aware.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["loss-aware decoder", "erasure-aware decoder", "decoder with atom loss", "loss-detecting decoder"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "hypergraph",
+          "label_en": "Hypergraph decoder",
+          "label_zh": "超图译码器",
+          "rules": [
+            {
+              "id": "decoder.hypergraph.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["decoding hypergraph", "hypergraph decoder", "hyperedge decoding"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "real_time_accelerated",
+          "label_en": "Real-time accelerated decoder",
+          "label_zh": "实时加速译码器",
+          "rules": [
+            {
+              "id": "decoder.realtime.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:FPGA|GPU|ASIC|real[- ]time).{0,60}decod(?:er|ing)|decod(?:er|ing).{0,60}(?:FPGA|GPU|ASIC|real[- ]time)"],
+              "confidence": 0.92
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "compilation_stage",
+      "label_en": "Compilation stage",
+      "label_zh": "编译阶段",
+      "description_en": "Neutral-atom and fault-tolerant compiler tasks from logical synthesis to real-time control.",
+      "description_zh": "从逻辑综合到实时控制的中性原子与容错编译任务。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "physical_circuit_compilation",
+          "label_en": "Physical-circuit compilation",
+          "label_zh": "物理线路编译",
+          "rules": [
+            {
+              "id": "compilation_stage.physical.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["physical circuit compilation", "physical-level circuit compilation", "neutral-atom compiler"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "quantum_layout_synthesis",
+          "label_en": "Quantum layout synthesis",
+          "label_zh": "量子布局综合",
+          "rules": [
+            {
+              "id": "compilation_stage.layout.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["quantum layout synthesis", "QLS"],
+              "match": "any",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "placement_routing_scheduling",
+          "label_en": "Placement, routing, and scheduling",
+          "label_zh": "布局、路由与调度",
+          "rules": [
+            {
+              "id": "compilation_stage.placement_routing.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["qubit placement", "atom routing", "qubit routing", "gate scheduling", "operation scheduling"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "reconfiguration_and_batching",
+          "label_en": "Reconfiguration solving and batching",
+          "label_zh": "重构求解与批处理",
+          "rules": [
+            {
+              "id": "compilation_stage.reconfiguration.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["atom reconfiguration solver", "reconfiguration solver", "movement batching", "displacement batching"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "quantum_circuit_synthesis",
+          "label_en": "Quantum circuit synthesis",
+          "label_zh": "量子线路综合",
+          "rules": [
+            {
+              "id": "compilation_stage.circuit_synthesis.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["quantum circuit synthesis", "native gate synthesis", "T-count optimization", "T-depth optimization"],
+              "match": "any",
+              "confidence": 0.93
+            }
+          ]
+        },
+        {
+          "id": "real_time_controller_synthesis",
+          "label_en": "Real-time controller and pulse synthesis",
+          "label_zh": "实时控制器与脉冲综合",
+          "rules": [
+            {
+              "id": "compilation_stage.controller.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["real-time controller synthesis", "pulse synthesis", "automatic pulse generation", "feedforward control"],
+              "match": "any",
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "id": "fault_tolerant_architecture_codesign",
+          "label_en": "Fault-tolerant architecture co-design",
+          "label_zh": "容错架构协同设计",
+          "rules": [
+            {
+              "id": "compilation_stage.ft_codesign.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["fault-tolerant architecture co-design", "fault tolerant architecture co-design", "compiler-driven architecture design"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "intermediate_representation",
+          "label_en": "Compiler intermediate representation",
+          "label_zh": "编译器中间表示",
+          "rules": [
+            {
+              "id": "compilation_stage.ir.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["Zoned Architecture Intermediate Representation", "ZAIR", "Bloqade-Shuttle", "Bloqade-Geometric", "compiler intermediate representation"],
+              "match": "any",
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "ai_assisted_compilation",
+          "label_en": "AI-assisted compilation and control",
+          "label_zh": "AI辅助编译与控制",
+          "rules": [
+            {
+              "id": "compilation_stage.ai.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:machine learning|reinforcement learning|deep learning|generative model).{0,80}(?:compil|routing|placement|scheduling|pulse|control)"],
+              "confidence": 0.87
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "photonics",
+      "label_en": "Photonics platform or device",
+      "label_zh": "光子平台或器件",
+      "description_en": "Integrated-photonics materials, modulators, beam-steering devices, control electronics, and laser sources.",
+      "description_zh": "集成光子材料、调制器、光束偏转器件、控制电子学和激光源。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "silicon_nitride",
+          "label_en": "Silicon nitride (SiN)",
+          "label_zh": "氮化硅（SiN）",
+          "rules": [
+            {
+              "id": "photonics.sin.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["silicon nitride", "SiN photonics", "Si3N4"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "alumina",
+          "label_en": "Alumina photonics",
+          "label_zh": "氧化铝光子平台",
+          "rules": [
+            {
+              "id": "photonics.alumina.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["alumina photonics", "alumina waveguide", "Al2O3 photonics"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "tfln",
+          "label_en": "Thin-film lithium niobate (TFLN)",
+          "label_zh": "薄膜铌酸锂（TFLN）",
+          "rules": [
+            {
+              "id": "photonics.tfln.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["thin-film lithium niobate", "thin film lithium niobate", "TFLN", "LiNbO3 photonics"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "tflt",
+          "label_en": "Thin-film lithium tantalate (TFLT)",
+          "label_zh": "薄膜钽酸锂（TFLT）",
+          "rules": [
+            {
+              "id": "photonics.tflt.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["thin-film lithium tantalate", "thin film lithium tantalate", "TFLT", "LiTaO3 photonics"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "apic",
+          "label_en": "Atom-control photonic integrated circuit (APIC)",
+          "label_zh": "原子控制光子集成电路（APIC）",
+          "rules": [
+            {
+              "id": "photonics.apic.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["Atom Control Photonic Integrated Circuit", "APIC architecture", "photonic integrated atom control"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "aobs_or_integrated_aod",
+          "label_en": "AOBS or integrated AOD",
+          "label_zh": "集成声光束偏转器",
+          "rules": [
+            {
+              "id": "photonics.aobs.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["acousto-optic beam steering", "AOBS", "integrated acousto-optic deflector", "integrated AOD"],
+              "match": "any",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "bulk_aod",
+          "label_en": "Acousto-optic deflector (AOD)",
+          "label_zh": "声光偏转器（AOD）",
+          "rules": [
+            {
+              "id": "photonics.aod.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["acousto-optic deflector", "acousto-optical deflector", "2D AOD"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "eom_or_vipa",
+          "label_en": "EOM or VIPA addressing",
+          "label_zh": "电光调制器或VIPA寻址",
+          "rules": [
+            {
+              "id": "photonics.eom_vipa.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["electro-optic modulator", "EOM addressing", "Virtually Imaged Phase Array", "VIPA"],
+              "match": "any",
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "id": "slm_or_dmd",
+          "label_en": "SLM or DMD beam control",
+          "label_zh": "SLM或DMD光束控制",
+          "rules": [
+            {
+              "id": "photonics.slm_dmd.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["spatial light modulator", "liquid-crystal-on-silicon SLM", "LCoS SLM", "digital micromirror device", "DMD beam control"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "cointegrated_electronics",
+          "label_en": "Co-integrated electronic-photonic control",
+          "label_zh": "电子-光子协同集成控制",
+          "rules": [
+            {
+              "id": "photonics.cointegrated_electronics.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["flip-chip bump bonding", "co-integrated electronics and photonics", "ASIC photonic driver", "on-chip pulse-sequence memory"],
+              "match": "any",
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "id": "sbs_sil_or_ectl_laser",
+          "label_en": "SBS, SIL, or ECTL integrated laser",
+          "label_zh": "SBS、SIL或ECTL集成激光器",
+          "rules": [
+            {
+              "id": "photonics.integrated_lasers.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["stimulated Brillouin scattering laser", "SBS laser", "self-injection-locked laser", "SIL laser", "external-cavity tunable laser", "ECTL laser"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "titanium_sapphire_laser",
+          "label_en": "Integrated titanium-sapphire laser",
+          "label_zh": "集成钛宝石激光器",
+          "rules": [
+            {
+              "id": "photonics.tisaph.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["(?:integrated|chip[- ]integrated).{0,30}(?:Ti:Saph|Ti:sapphire|titanium[- ]sapphire) laser"],
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "vcsel",
+          "label_en": "VCSEL array",
+          "label_zh": "垂直腔面发射激光器阵列",
+          "rules": [
+            {
+              "id": "photonics.vcsel.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["\\bVCSEL(?:s| array)?\\b|vertical[- ]cavity surface[- ]emitting laser"],
+              "confidence": 0.96
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "networking",
+      "label_en": "Quantum networking technique",
+      "label_zh": "量子网络技术",
+      "description_en": "Physical links, entanglement protocols, photonic encodings, multiplexing, and modular-system integration.",
+      "description_zh": "物理链路、纠缠协议、光子编码、复用和模块化系统集成。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "atom_photon_entanglement",
+          "label_en": "Atom-photon entanglement",
+          "label_zh": "原子-光子纠缠",
+          "rules": [
+            {
+              "id": "networking.atom_photon.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "regex": ["atom[-– ]photon entanglement"],
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "remote_atom_atom_entanglement",
+          "label_en": "Remote atom-atom entanglement",
+          "label_zh": "远程原子-原子纠缠",
+          "rules": [
+            {
+              "id": "networking.remote_entanglement.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["remote atom-atom entanglement", "remote atom–atom entanglement", "heralded atom-atom entanglement", "remote Bell pair"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "meet_in_the_middle",
+          "label_en": "Meet-in-the-middle heralding",
+          "label_zh": "中点会合式预示协议",
+          "rules": [
+            {
+              "id": "networking.meet_middle.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["meet-in-the-middle", "two-photon heralding protocol"],
+              "match": "any",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "cavity_interface",
+          "label_en": "Optical-cavity network interface",
+          "label_zh": "光学腔网络接口",
+          "rules": [
+            {
+              "id": "networking.cavity_interface.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["atom-cavity interface", "cavity-based quantum network", "fiber Fabry-Perot cavity", "nanophotonic cavity interface", "photonic crystal cavity"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "coherent_atom_transport_link",
+          "label_en": "Coherent atom-transport link",
+          "label_zh": "相干原子输运链路",
+          "rules": [
+            {
+              "id": "networking.transport_link.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["long-range atom transport", "coherent transport between QPUs", "transportable atom interconnect", "fly-by Rydberg-mediated gate"],
+              "match": "any",
+              "confidence": 0.93
+            }
+          ]
+        },
+        {
+          "id": "temporal_multiplexing",
+          "label_en": "Temporal multiplexing",
+          "label_zh": "时间复用",
+          "rules": [
+            {
+              "id": "networking.temporal_mux.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["temporal multiplexing", "time-multiplexed networking"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "spatial_multiplexing",
+          "label_en": "Spatial multiplexing",
+          "label_zh": "空间复用",
+          "rules": [
+            {
+              "id": "networking.spatial_mux.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["spatial multiplexing", "spatially multiplexed entanglement"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "spectral_multiplexing",
+          "label_en": "Spectral or frequency multiplexing",
+          "label_zh": "光谱或频率复用",
+          "rules": [
+            {
+              "id": "networking.spectral_mux.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["spectral multiplexing", "frequency-multiplexed entanglement", "frequency multiplexing"],
+              "match": "any",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "cavity_mode_multiplexing",
+          "label_en": "Cavity-mode multiplexing",
+          "label_zh": "腔模复用",
+          "rules": [
+            {
+              "id": "networking.cavity_mode_mux.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["cavity-mode multiplexing", "multimode cavity interface"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "polarization_encoding",
+          "label_en": "Polarization photonic encoding",
+          "label_zh": "偏振光子编码",
+          "rules": [
+            {
+              "id": "networking.polarization.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["polarization[- ](?:encoded|based) (?:photonic )?(?:qubit|entanglement|protocol)"],
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "time_bin_encoding",
+          "label_en": "Time-bin photonic encoding",
+          "label_zh": "时间箱光子编码",
+          "rules": [
+            {
+              "id": "networking.time_bin.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["time[- ]bin (?:encoded )?(?:photonic )?(?:qubit|encoding|entanglement)"],
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "telecom_photon",
+          "label_en": "Telecom-band photonic link",
+          "label_zh": "电信波段光子链路",
+          "rules": [
+            {
+              "id": "networking.telecom.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["telecom(?:munication)?[- ](?:band|wavelength) (?:photon|entanglement|network|link)|telecom[- ]compatible quantum network"],
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "quantum_frequency_conversion",
+          "label_en": "Quantum frequency conversion",
+          "label_zh": "量子频率转换",
+          "rules": [
+            {
+              "id": "networking.frequency_conversion.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["quantum frequency conversion", "frequency conversion to telecom", "telecom frequency conversion"],
+              "match": "any",
+              "confidence": 0.96
+            }
+          ]
+        },
+        {
+          "id": "modular_qpu_network",
+          "label_en": "Modular QPU network",
+          "label_zh": "模块化QPU网络",
+          "rules": [
+            {
+              "id": "networking.modular_qpu.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["modular quantum processor", "networked QPU", "interconnected QPU", "distributed quantum processor", "modular quantum computing"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        },
+        {
+          "id": "disparate_quantum_systems",
+          "label_en": "Interfacing disparate quantum systems",
+          "label_zh": "异构量子系统接口",
+          "rules": [
+            {
+              "id": "networking.disparate.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["disparate quantum systems", "heterogeneous quantum interface", "cross-platform entanglement"],
+              "match": "any",
+              "confidence": 0.92
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "application",
+      "label_en": "Application or target problem",
+      "label_zh": "应用或目标问题",
+      "description_en": "Scientific, computational, cryptographic, sensing, and benchmark applications.",
+      "description_zh": "科学计算、算法、密码学、传感和基准测试应用。",
+      "multi": true,
+      "categories": [
+        {
+          "id": "quantum_simulation",
+          "label_en": "Quantum simulation",
+          "label_zh": "量子仿真",
+          "rules": [
+            {
+              "id": "application.quantum_simulation.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["quantum simulation", "quantum simulator"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "optimization",
+          "label_en": "Optimization",
+          "label_zh": "优化问题",
+          "rules": [
+            {
+              "id": "application.optimization.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["combinatorial optimization", "quantum optimization", "maximum independent set", "QAOA"],
+              "match": "any",
+              "confidence": 0.88
+            }
+          ]
+        },
+        {
+          "id": "quantum_chemistry",
+          "label_en": "Quantum chemistry",
+          "label_zh": "量子化学",
+          "rules": [
+            {
+              "id": "application.chemistry.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["quantum chemistry", "molecular electronic structure", "molecular simulation", "reaction dynamics"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "materials_science",
+          "label_en": "Materials science",
+          "label_zh": "材料科学",
+          "rules": [
+            {
+              "id": "application.materials.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["materials simulation", "material simulation", "materials science", "strongly correlated material"],
+              "match": "any",
+              "confidence": 0.88
+            }
+          ]
+        },
+        {
+          "id": "nuclear_or_high_energy",
+          "label_en": "Nuclear or high-energy physics",
+          "label_zh": "核物理或高能物理",
+          "rules": [
+            {
+              "id": "application.nuclear_hep.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["nuclear dynamics", "nuclear physics", "high-energy physics", "lattice gauge theory", "heavy-ion collision"],
+              "match": "any",
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "id": "cryptography_factoring_or_dlog",
+          "label_en": "Cryptography, factoring, or discrete logarithm",
+          "label_zh": "密码学、因数分解或离散对数",
+          "rules": [
+            {
+              "id": "application.crypto.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["Shor's algorithm", "integer factoring", "discrete logarithm", "post-quantum cryptography", "cryptographic quantum algorithm"],
+              "match": "any",
+              "confidence": 0.91
+            }
+          ]
+        },
+        {
+          "id": "proofs_or_certified_randomness",
+          "label_en": "Proofs of quantumness or certified randomness",
+          "label_zh": "量子性证明或认证随机数",
+          "rules": [
+            {
+              "id": "application.proofs_randomness.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["proof of quantumness", "proofs of quantumness", "certified random number", "certifiable random number", "certified randomness"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "quantum_sensing",
+          "label_en": "Quantum sensing",
+          "label_zh": "量子传感",
+          "rules": [
+            {
+              "id": "application.sensing.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["quantum sensing", "quantum computational sensing", "Rydberg sensing", "quantum-enhanced sensing"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "blind_quantum_computing",
+          "label_en": "Blind quantum computing",
+          "label_zh": "盲量子计算",
+          "rules": [
+            {
+              "id": "application.blind_qc.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["blind quantum computing", "blind quantum computation"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "ising_model",
+          "label_en": "Ising-model simulation",
+          "label_zh": "伊辛模型仿真",
+          "rules": [
+            {
+              "id": "application.ising.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["\\b(?:kicked |quantum )?Ising (?:model|Hamiltonian|simulation)\\b"],
+              "confidence": 0.93
+            }
+          ]
+        },
+        {
+          "id": "xy_or_xxz_model",
+          "label_en": "XY or XXZ-model simulation",
+          "label_zh": "XY或XXZ模型仿真",
+          "rules": [
+            {
+              "id": "application.xy_xxz.text",
+              "fields": ["title", "abstract", "review_context"],
+              "regex": ["\\b(?:XY|XXZ) (?:model|Hamiltonian|interaction|simulation)\\b"],
+              "confidence": 0.94
+            }
+          ]
+        },
+        {
+          "id": "fermi_hubbard",
+          "label_en": "Fermi-Hubbard model",
+          "label_zh": "费米-哈伯德模型",
+          "rules": [
+            {
+              "id": "application.fermi_hubbard.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["Fermi-Hubbard model", "Fermi Hubbard model", "fermionic Hubbard model"],
+              "match": "any",
+              "confidence": 0.97
+            }
+          ]
+        },
+        {
+          "id": "lattice_gauge_theory",
+          "label_en": "Lattice-gauge simulation",
+          "label_zh": "格点规范场仿真",
+          "rules": [
+            {
+              "id": "application.lattice_gauge.text",
+              "fields": ["title", "abstract", "review_context"],
+              "keywords": ["lattice gauge theory", "lattice-gauge theory", "gauge-theory simulation"],
+              "match": "any",
+              "confidence": 0.95
+            }
+          ]
+        },
+        {
+          "id": "thermal_states_and_dynamics",
+          "label_en": "Thermal states and many-body dynamics",
+          "label_zh": "热态与多体动力学",
+          "rules": [
+            {
+              "id": "application.thermal_dynamics.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["thermal state preparation", "thermal-state simulation", "many-body dynamics", "thermalization", "microcanonical state"],
+              "match": "any",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "transport_or_spectroscopy",
+          "label_en": "Transport or spectroscopy",
+          "label_zh": "输运或光谱学",
+          "rules": [
+            {
+              "id": "application.transport_spectroscopy.text",
+              "fields": ["title", "abstract", "topics", "review_context"],
+              "keywords": ["spin transport", "electron transport", "transport coefficient", "vibrational spectroscopy", "pump-probe spectroscopy", "NMR spectroscopy"],
+              "match": "any",
+              "confidence": 0.88
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

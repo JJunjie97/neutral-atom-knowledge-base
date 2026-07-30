@@ -22,7 +22,11 @@ export function normalizeSearch(value: string) {
     .toLocaleLowerCase();
 }
 
-export function matchesSearch(node: GraphNode, normalizedQuery: string) {
+export function matchesSearch(
+  node: GraphNode,
+  normalizedQuery: string,
+  facetSearchLabels?: ReadonlyMap<string, string>,
+) {
   if (!normalizedQuery) return true;
   const haystack = [
     node.title,
@@ -33,12 +37,35 @@ export function matchesSearch(node: GraphNode, normalizedQuery: string) {
     node.openalex,
     node.bibKeys.join(" "),
     node.topics.join(" "),
+    ...Object.entries(node.facets ?? {}).flatMap(([dimensionId, categoryIds]) =>
+      categoryIds.map(
+        (categoryId) =>
+          facetSearchLabels?.get(`${dimensionId}:${categoryId}`) ?? categoryId,
+      ),
+    ),
   ]
     .filter(Boolean)
     .join(" ");
   return normalizeSearch(haystack).includes(normalizedQuery);
 }
 
+export function matchesFacetSelections(
+  node: GraphNode,
+  selections: Record<string, string[]>,
+) {
+  for (const [dimensionId, selectedCategories] of Object.entries(selections)) {
+    if (!selectedCategories.length) continue;
+    const nodeCategories = node.facets?.[dimensionId] ?? [];
+    if (
+      !selectedCategories.some((categoryId) =>
+        nodeCategories.includes(categoryId),
+      )
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
 export function safeExternalUrl(value: string | null | undefined) {
   if (!value) return null;
   try {

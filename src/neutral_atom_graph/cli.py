@@ -6,9 +6,11 @@ import os
 from pathlib import Path
 from typing import Any
 
+from .classification import load_taxonomy, sync_review_mentions
 from .crossref import CrossrefClient, repair_missing_doi_metadata
 from .db import LiteratureDB
 from .export import export_graph
+from .facets import classify_facets
 from .knowledge import build_catalog, citation_neighbors, get_work
 from .library import index_markdown, search_library, sync_library
 from .openalex import OpenAlexClient
@@ -141,6 +143,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     neighbors.add_argument("--limit", type=int, default=100)
 
+    classify = sub.add_parser(
+        "classify",
+        help="Build auditable multi-dimensional facets from local metadata and review context.",
+    )
+    _add_db(classify)
+    classify.add_argument("--taxonomy", default="config/taxonomy.json")
+    classify.add_argument(
+        "--tex-dir",
+        default="library/papers/arxiv/2607/2607.21554/source",
+    )
+    classify.add_argument("--review-id", default="arxiv:2607.21554")
+    classify.add_argument("--root-file", default="main.tex")
+    classify.add_argument("--skip-review-sync", action="store_true")
+    classify.add_argument(
+        "--seed-only",
+        action="store_true",
+        help="Classify only bibliography seed works (default: all graph works).",
+    )
+
     export_parser = sub.add_parser("export", help="Export JSON, CSV and GraphML.")
     _add_db(export_parser)
     export_parser.add_argument("--out", default="data/exports")
@@ -259,6 +280,26 @@ def main(argv: list[str] | None = None) -> None:
                     direction=args.direction,
                     limit=args.limit,
                 )
+            )
+        elif args.command == "classify":
+            mention_result = None
+            if not args.skip_review_sync:
+                mention_result = sync_review_mentions(
+                    db,
+                    args.tex_dir,
+                    review_id=args.review_id,
+                    root_file=args.root_file,
+                )
+            _print(
+                {
+                    "review_mentions": mention_result,
+                    "classification": classify_facets(
+                        db,
+                        load_taxonomy(args.taxonomy),
+                        seed_only=args.seed_only,
+                        progress=print,
+                    ),
+                }
             )
         elif args.command == "export":
             _print(export_graph(db, args.out))
