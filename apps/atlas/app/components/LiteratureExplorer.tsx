@@ -32,10 +32,15 @@ import type {
   ViewName,
 } from "../types";
 import DetailsPanel from "./DetailsPanel";
+import FacetFilterPanel from "./FacetFilterPanel";
 import GraphCanvas from "./GraphCanvas";
 import OverviewView from "./OverviewView";
 import TimelineView from "./TimelineView";
 
+const EMPTY_TAXONOMY: GraphData["taxonomy"] = {
+  version: null,
+  dimensions: [],
+};
 const INITIAL_FILTERS: GraphFilters = {
   query: "",
   facets: {},
@@ -104,7 +109,7 @@ export default function LiteratureExplorer() {
   const generatedLabel = data?.meta.generated_at
     ? new Date(data.meta.generated_at).toLocaleDateString("zh-CN")
     : "本地快照";
-  const taxonomy = data?.taxonomy ?? { version: null, dimensions: [] };
+  const taxonomy = data?.taxonomy ?? EMPTY_TAXONOMY;
   const facetSearchLabels = useMemo(
     () =>
       new Map(
@@ -351,7 +356,7 @@ export default function LiteratureExplorer() {
                 autoComplete="off"
                 id="paper-search"
                 onChange={(event) => updateFilter("query", event.target.value)}
-                placeholder="标题、作者、DOI、BibTeX…"
+                placeholder="标题、作者、DOI、分类、BibTeX…"
                 type="search"
                 value={filters.query}
               />

@@ -205,6 +205,11 @@ def compact_node(
 
     title, title_missing = display_title(node)
     abstract = str(node.get("abstract") or "").strip()
+    facets = {
+        str(dimension_id): [str(category_id) for category_id in category_ids]
+        for dimension_id, category_ids in (node.get("facets") or {}).items()
+        if isinstance(category_ids, list)
+    }
     entity_kind = entity_kind_for_node(node)
     metadata_status = node.get("metadata_status") or (
         "non_bibliographic"
@@ -231,6 +236,11 @@ def compact_node(
         "detailPath": (
             f"/data/papers/{detail_file_key(node)}.json" if abstract else None
         ),
+        "classificationPath": (
+            f"/data/classifications/{detail_file_key(node)}.json"
+            if node.get("is_seed")
+            else None
+        ),
         "url": node.get("url"),
         "oaUrl": node.get("oa_url"),
         "doi": node.get("doi"),
@@ -243,6 +253,9 @@ def compact_node(
         "bibKey": node.get("bib_key"),
         "bibKeys": node.get("bib_keys") or [],
         "sections": node.get("cited_in_sections") or [],
+        "facets": facets,
+        "layoutGroup": group if group in SECTION_META else "other",
+        # Compatibility alias for the existing canvas layout algorithm.
         "group": group if group in SECTION_META else "other",
         "in": int(node.get("in_degree") or 0),
         "out": int(node.get("out_degree") or 0),
@@ -275,7 +288,11 @@ def compact_graph(
     ]
     years = [node["year"] for node in nodes if node.get("year")]
     year_counts = Counter(years)
-    section_counts = Counter(node["group"] for node in compact_nodes)
+    section_counts = Counter(node["layoutGroup"] for node in compact_nodes)
+    facet_counts: dict[str, Counter[str]] = defaultdict(Counter)
+    for node in compact_nodes:
+        for dimension_id, category_ids in node["facets"].items():
+            facet_counts[dimension_id].update(set(category_ids))
 
     return {
         "meta": {
@@ -294,12 +311,18 @@ def compact_graph(
                 key=lambda item: item[0],
             ),
             "sectionCounts": dict(section_counts),
+            "facetCounts": {
+                dimension_id: dict(counts)
+                for dimension_id, counts in facet_counts.items()
+            },
             "layout": "offline-force-v1",
         },
         "sections": [
             {"id": section_id, **meta}
             for section_id, meta in SECTION_META.items()
         ],
+        "taxonomy": graph.get("taxonomy")
+        or {"version": None, "dimensions": []},
         "nodes": compact_nodes,
         "edges": compact_edges,
     }
@@ -422,6 +445,48 @@ def write_detail_shards(graph: dict[str, Any], output: Path) -> int:
     return written
 
 
+def write_classification_shards(
+    graph: dict[str, Any], output: Path
+) -> int:
+    """Write public, evidence-only shards for review seed papers.
+
+    Abstracts and source context intentionally stay in the ignored papers/
+    directory. These shards contain only taxonomy assignments and compact
+    provenance signals that are safe to publish with the static atlas.
+    """
+    written = 0
+    detail_dir = output / "classifications"
+    expected_files: set[str] = set()
+    taxonomy = graph.get("taxonomy") or {"version": None, "dimensions": []}
+    for node in graph["nodes"]:
+        if not node.get("is_seed"):
+            continue
+        filename = f"{detail_file_key(node)}.json"
+        expected_files.add(filename)
+        facets = {
+            str(dimension_id): [
+                str(category_id) for category_id in category_ids
+            ]
+            for dimension_id, category_ids in (node.get("facets") or {}).items()
+            if isinstance(category_ids, list)
+        }
+        write_json(
+            detail_dir / filename,
+            {
+                "id": node["id"],
+                "paperUid": node.get("paper_uid"),
+                "taxonomyVersion": taxonomy.get("version"),
+                "facets": facets,
+                "classifications": node.get("classification_evidence") or [],
+            },
+        )
+        written += 1
+    if detail_dir.is_dir():
+        for stale in detail_dir.glob("*.json"):
+            if stale.name not in expected_files:
+                stale.unlink()
+    return written
+
 def main() -> None:
     args = parse_args()
     seed_graph = json.loads(
@@ -430,7 +495,16 @@ def main() -> None:
     full_graph = json.loads(
         (args.source / "graph.json").read_text(encoding="utf-8")
     )
+    taxonomy = full_graph.get("taxonomy") or seed_graph.get("taxonomy") or {
+        "version": None,
+        "dimensions": [],
+    }
+    full_graph["taxonomy"] = taxonomy
+    seed_graph["taxonomy"] = taxonomy
     detail_shards = write_detail_shards(full_graph, args.output)
+    classification_shards = write_classification_shards(
+        full_graph, args.output
+    )
 
     seed_ids = [node["id"] for node in seed_graph["nodes"]]
     seed_positions = spring_layout(seed_ids, seed_graph["edges"])
@@ -457,6 +531,7 @@ def main() -> None:
                     "edges": full_payload["meta"]["edgeCount"],
                 },
                 "detailShards": detail_shards,
+                "classificationShards": classification_shards,
                 "output": str(args.output),
             },
             ensure_ascii=False,

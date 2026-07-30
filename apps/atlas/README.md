@@ -6,9 +6,10 @@
 
 - 637 个综述核心实体及其互引关系；
 - 14,000+ 个完整图实体和 30,000+ 条引用边；
-- 标题、作者、DOI、arXiv、OpenAlex、BibTeX key 搜索；
-- 章节、年份、graph degree 与元数据状态筛选；
-- 点击论文查看入边、出边，并切换 1-hop / 2-hop 局部星图；
+- 标题、作者、DOI、arXiv、OpenAlex、BibTeX key 与分类中英文搜索；
+- 原子元素/同位素、平台架构、计算模式、具体技术、QEC、编译、光子、网络、应用、venue 与综述层级等多维筛选；
+- 同一分类维度内取并集（OR），不同维度间取交集（AND），并显示计数和 active chips；
+- 点击论文查看分类置信度、规则 signals 与综述引用位置，以及入边、出边和 1-hop / 2-hop 局部星图；
 - 缺题名节点使用唯一外部 ID，不伪造“未命名文献”；
 - 摘要按论文静态分片加载，必要时再回退 OpenAlex；
 - 支持 Chrome 内置英文 → 中文题目/摘要翻译，结果只缓存在当前浏览器。
@@ -18,6 +19,7 @@
 先在仓库根目录运行：
 
 ```powershell
+python -m neutral_atom_graph classify
 python -m neutral_atom_graph export
 python apps/atlas/scripts/prepare_data.py
 ```
@@ -32,8 +34,9 @@ python apps/atlas/scripts/prepare_data.py
 - `apps/atlas/public/data/core-graph.json`
 - `apps/atlas/public/data/full-graph.json`
 - `apps/atlas/public/data/papers/<paper_uid>.json`（仅有本地摘要时；默认不提交）
+- `apps/atlas/public/data/classifications/<paper_uid>.json`（仅 637 篇综述核心文献的公开分类依据）
 
-图布局在构建前离线计算。全文不会放进单个 graph JSON，以免 GitHub Pages 下载体积随文库无限增长。摘要分片只有在确认再分发许可后才应提交；否则网页会按需回退到 OpenAlex。
+图布局在构建前离线计算。全文和分类依据不会放进单个 graph JSON，以免 GitHub Pages 下载体积随文库无限增长。`papers/` 摘要分片只有在确认再分发许可后才应提交；`classifications/` 分片可提交，但只包含 taxonomy assignments、置信度、规则 signals 与综述 heading，不包含摘要、上下文摘录或全文。
 
 ## 本地运行
 

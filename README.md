@@ -19,6 +19,7 @@
 .
 ├── apps/atlas/                 # 可发布到 GitHub Pages 的文献星图
 ├── src/neutral_atom_graph/     # 抓取、去重、导出和本地全文索引
+├── taxonomy/                   # 多维分类定义、双语标签与可审计规则
 ├── tests/                      # Python 回归测试
 ├── library/
 │   ├── inbox/                  # 新下载、尚未归档的论文
@@ -68,6 +69,7 @@ python -m neutral_atom_graph neighbors paper-00000001 --direction both
 python -m neutral_atom_graph ingest
 python -m neutral_atom_graph crawl-openalex
 python -m neutral_atom_graph repair-metadata
+python -m neutral_atom_graph classify
 python -m neutral_atom_graph export
 
 cd apps/atlas
@@ -75,6 +77,8 @@ python scripts/prepare_data.py
 npm install
 npm run dev
 ```
+
+`classify` 会从本地 OpenAlex 缓存恢复 topics，解析综述中的 citation context 和章节路径，并生成元素/同位素、物理平台、架构、门与控制技术、QEC、编译、光子、网络、应用和 venue 等独立 facets。它不需要联网，并会持续输出处理进度；规则结果保留置信度和来源，人工标签不会被重跑覆盖。
 
 原先界面中的“未命名文献”不会再被伪装成同名节点。没有可靠题名时，系统保留其 DOI、arXiv、OpenAlex 或稳定 `paper_uid`，显示为 `Metadata unavailable - <identifier>`；这类节点仍然承载真实引用边，可在网页中单独显示或隐藏。`private communication` 会作为非论文知识实体单独标记。
 
@@ -100,6 +104,8 @@ SQLite 当前超过 GitHub 普通 Git 的单文件限制，因此应通过 Relea
 
 - [系统架构](docs/ARCHITECTURE.md)
 - [AI 检索与接入](docs/AI-ACCESS.md)
+- [多维分类体系与证据模型](docs/CLASSIFICATION.md)
+- [当前分类覆盖与误判审计报告](docs/CLASSIFICATION-REPORT.md)
 - [论文下载、归档与 Markdown 流程](docs/PAPER-INGESTION.md)
 - [数据与版权边界](docs/DATA-POLICY.md)
 - [网页说明](apps/atlas/README.md)

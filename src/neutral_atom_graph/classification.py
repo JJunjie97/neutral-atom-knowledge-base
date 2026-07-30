@@ -289,11 +289,12 @@ def _plain_tex(text: str) -> str:
     text = _CITE_COMMAND.sub(" ", text)
     text = _LATEX_COMMAND.sub(" ", text)
     text = text.replace("{", " ").replace("}", " ")
+    text = text.replace("$", " ").replace("^", " ").replace("_", " ")
     text = text.replace("~", " ").replace("&", " ")
     return _WHITESPACE.sub(" ", text).strip()
 
 
-def _citation_context(text: str, start: int, end: int, *, limit: int = 700) -> str:
+def _citation_context(text: str, start: int, end: int, *, limit: int = 460) -> str:
     line_start = text.rfind("\n", 0, start) + 1
     line_end = text.find("\n", end)
     if line_end < 0:
@@ -306,9 +307,23 @@ def _citation_context(text: str, start: int, end: int, *, limit: int = 700) -> s
     paragraph_start = 0 if paragraph_start < 0 else paragraph_start + 2
     paragraph_end = text.find("\n\n", end)
     paragraph_end = len(text) if paragraph_end < 0 else paragraph_end
-    left = max(paragraph_start, start - limit // 2)
-    right = min(paragraph_end, end + limit // 2)
-    return _plain_tex(text[left:right])
+    paragraph = text[paragraph_start:paragraph_end]
+    relative_start = start - paragraph_start
+    relative_end = end - paragraph_start
+
+    # A whole review paragraph often discusses several papers, species, or
+    # techniques.  Assigning every term in that paragraph to every citation
+    # creates plausible-looking but incorrect facets.  Prefer the sentence
+    # containing the citation; table rows remain handled by the branch above.
+    boundary = re.compile(r"(?<=[.!?])\s+")
+    previous = list(boundary.finditer(paragraph, 0, relative_start))
+    left = previous[-1].end() if previous else 0
+    following = boundary.search(paragraph, relative_end)
+    right = following.start() if following else len(paragraph)
+    if right - left > limit:
+        left = max(left, relative_start - limit // 2)
+        right = min(right, relative_end + limit // 2)
+    return _plain_tex(paragraph[left:right])
 
 
 def _mention_id(
@@ -403,10 +418,31 @@ def sync_review_mentions(
     mentions = extract_review_mentions(
         tex_dir, review_id=review_id, root_file=root_file
     )
-    work_by_key = {
-        str(row["bib_key"]): int(row["work_id"])
-        for row in db.conn.execute("SELECT bib_key,work_id FROM seed_entries")
-    }
+    work_by_key: dict[str, int] = {}
+    ambiguous_aliases: set[str] = set()
+    for row in db.conn.execute(
+        "SELECT bib_key,work_id,raw_json FROM seed_entries"
+    ):
+        work_id = int(row["work_id"])
+        primary_key = str(row["bib_key"])
+        work_by_key[primary_key] = work_id
+        try:
+            fields = json.loads(row["raw_json"] or "{}")
+        except json.JSONDecodeError:
+            fields = {}
+        raw_aliases = fields.get("ids") if isinstance(fields, dict) else None
+        if isinstance(raw_aliases, list):
+            aliases = [str(alias).strip() for alias in raw_aliases]
+        else:
+            aliases = re.split(r"\s*[,;]\s*", str(raw_aliases or ""))
+        for alias in (item for item in aliases if item):
+            existing = work_by_key.get(alias)
+            if existing is not None and existing != work_id:
+                ambiguous_aliases.add(alias)
+            elif alias not in ambiguous_aliases:
+                work_by_key[alias] = work_id
+    for alias in ambiguous_aliases:
+        work_by_key.pop(alias, None)
     with db.transaction():
         db.conn.execute("DELETE FROM review_mentions WHERE review_id=?", (review_id,))
         resolved = 0
@@ -443,6 +479,7 @@ def sync_review_mentions(
         "works_mentioned": len(
             {mention["bib_key"] for mention in mentions if mention["bib_key"] in work_by_key}
         ),
+        "ambiguous_bib_aliases": len(ambiguous_aliases),
     }
 
 
@@ -673,13 +710,23 @@ def classify_works(
             )
 
     with db.transaction():
-        db.conn.execute(
-            """
-            DELETE FROM work_classifications
-            WHERE taxonomy_version=? AND method='deterministic_rule'
-            """,
-            (taxonomy.version,),
-        )
+        if seed_only:
+            db.conn.execute(
+                """
+                DELETE FROM work_classifications
+                WHERE method='deterministic_rule'
+                  AND work_id IN (
+                    SELECT work_id FROM works WHERE is_seed=1
+                  )
+                """
+            )
+        else:
+            db.conn.execute(
+                """
+                DELETE FROM work_classifications
+                WHERE method='deterministic_rule'
+                """
+            )
         for assignment in assignments:
             db.conn.execute(
                 """

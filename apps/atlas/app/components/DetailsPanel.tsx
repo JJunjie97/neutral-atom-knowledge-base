@@ -12,7 +12,7 @@ import {
   Network,
   X,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   authorLine,
   formatNumber,
@@ -20,13 +20,19 @@ import {
   safeExternalUrl,
 } from "../graph-utils";
 import { publicUrl } from "../site-config";
-import type { GraphData, GraphNode } from "../types";
+import type {
+  ClassificationEvidence,
+  GraphData,
+  GraphNode,
+  PaperClassificationDetail,
+} from "../types";
 
 type Props = {
   data: GraphData;
   isIsolatedRoot: boolean;
   selectedIndex: number | null;
   onClose: () => void;
+  onFacetSelect: (dimensionId: string, categoryId: string) => void;
   onIsolate: (index: number) => void;
   onSelect: (index: number) => void;
 };
@@ -139,6 +145,7 @@ export default function DetailsPanel({
   isIsolatedRoot,
   selectedIndex,
   onClose,
+  onFacetSelect,
   onIsolate,
   onSelect,
 }: Props) {
@@ -166,6 +173,7 @@ export default function DetailsPanel({
       key={data.nodes[selectedIndex].id}
       node={data.nodes[selectedIndex]}
       onClose={onClose}
+      onFacetSelect={onFacetSelect}
       onIsolate={() => onIsolate(selectedIndex)}
       onSelect={onSelect}
       relations={relations}
@@ -178,6 +186,7 @@ function PaperDetails({
   isIsolatedRoot,
   node,
   onClose,
+  onFacetSelect,
   onIsolate,
   onSelect,
   relations,
@@ -186,6 +195,7 @@ function PaperDetails({
   isIsolatedRoot: boolean;
   node: GraphNode;
   onClose: () => void;
+  onFacetSelect: (dimensionId: string, categoryId: string) => void;
   onIsolate: () => void;
   onSelect: (index: number) => void;
   relations: { incoming: number[]; outgoing: number[] };
@@ -206,8 +216,49 @@ function PaperDetails({
     null,
   );
   const translatorRef = useRef<TranslatorSession | null>(null);
+  const [classificationDetail, setClassificationDetail] =
+    useState<PaperClassificationDetail | null>(null);
+  const [classificationLoading, setClassificationLoading] = useState(
+    Boolean(node.classificationPath),
+  );
+  const [classificationError, setClassificationError] = useState("");
 
-  const section = data.sections.find((item) => item.id === node.group);
+  useEffect(() => {
+    if (!node.classificationPath) return;
+    let cancelled = false;
+
+    fetch(publicUrl(node.classificationPath))
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json() as Promise<PaperClassificationDetail>;
+      })
+      .then((payload) => {
+        if (!cancelled) {
+          setClassificationDetail({
+            ...payload,
+            facets: payload.facets ?? {},
+            classifications: payload.classifications ?? [],
+          });
+        }
+      })
+      .catch((cause: unknown) => {
+        if (!cancelled) {
+          setClassificationError(
+            cause instanceof Error ? cause.message : String(cause),
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setClassificationLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [node.classificationPath]);
+
+  const section = data.sections.find(
+    (item) => item.id === (node.layoutGroup ?? node.group),
+  );
   const relationCount = relations.incoming.length + relations.outgoing.length;
   const externalUrl = node.titleMissing
     ? (node.doi ? safeExternalUrl(`https://doi.org/${node.doi}`) : null) ??
@@ -370,7 +421,8 @@ function PaperDetails({
             className="legend-swatch"
             style={{ background: section?.color ?? "#7F8DA8" }}
           />
-          {section?.label ?? "未分类"}
+          <span>布局分区</span>
+          <strong>{section?.label ?? "其他"}</strong>
         </div>
         <button
           aria-label="关闭详情"
@@ -471,6 +523,14 @@ function PaperDetails({
           </div>
         )}
 
+        <ClassificationSection
+          data={data}
+          detail={classificationDetail}
+          error={classificationError}
+          loading={classificationLoading}
+          node={node}
+          onFacetSelect={onFacetSelect}
+        />
         <section className="detail-section abstract-section">
           <div className="detail-section-title">
             <h3>Abstract</h3>
@@ -572,7 +632,7 @@ function PaperDetails({
 
         {node.topics.length > 0 && (
           <section className="detail-section">
-            <h3>主题</h3>
+            <h3>OpenAlex Topics</h3>
             <div className="topic-tags">
               {node.topics.map((topic) => (
                 <span key={topic}>{topic}</span>
@@ -600,6 +660,197 @@ function PaperDetails({
   );
 }
 
+const METHOD_LABELS: Record<string, string> = {
+  deterministic_rule: "规则匹配",
+  review_hierarchy: "综述章节",
+  venue_metadata: "Venue 元数据",
+  manual: "人工确认",
+};
+
+function confidencePercent(value: number) {
+  const normalized = value <= 1 ? value * 100 : value;
+  return Math.max(0, Math.min(100, Math.round(normalized)));
+}
+
+function ClassificationSection({
+  data,
+  detail,
+  error,
+  loading,
+  node,
+  onFacetSelect,
+}: {
+  data: GraphData;
+  detail: PaperClassificationDetail | null;
+  error: string;
+  loading: boolean;
+  node: GraphNode;
+  onFacetSelect: (dimensionId: string, categoryId: string) => void;
+}) {
+  const dimensions = data.taxonomy?.dimensions ?? [];
+  const dimensionById = new Map(
+    dimensions.map((dimension, index) => [dimension.id, { dimension, index }]),
+  );
+  const evidenceByKey = new Map<string, ClassificationEvidence>();
+  for (const evidence of detail?.classifications ?? []) {
+    const key = `${evidence.dimension}:${evidence.category}`;
+    const previous = evidenceByKey.get(key);
+    if (!previous || evidence.confidence > previous.confidence) {
+      evidenceByKey.set(key, evidence);
+    }
+  }
+
+  const mergedFacets: Record<string, string[]> = { ...(detail?.facets ?? {}) };
+  for (const [dimensionId, categoryIds] of Object.entries(node.facets ?? {})) {
+    mergedFacets[dimensionId] = Array.from(
+      new Set([...(mergedFacets[dimensionId] ?? []), ...categoryIds]),
+    );
+  }
+  for (const evidence of detail?.classifications ?? []) {
+    mergedFacets[evidence.dimension] = Array.from(
+      new Set([
+        ...(mergedFacets[evidence.dimension] ?? []),
+        evidence.category,
+      ]),
+    );
+  }
+
+  const assignments = Object.entries(mergedFacets)
+    .flatMap(([dimensionId, categoryIds]) =>
+      categoryIds.map((categoryId) => {
+        const dimensionEntry = dimensionById.get(dimensionId);
+        const category = dimensionEntry?.dimension.categories.find(
+          (item) => item.id === categoryId,
+        );
+        return {
+          dimensionId,
+          categoryId,
+          dimensionIndex: dimensionEntry?.index ?? Number.MAX_SAFE_INTEGER,
+          dimensionLabel:
+            dimensionEntry?.dimension.label_zh ||
+            dimensionEntry?.dimension.label_en ||
+            dimensionId,
+          categoryLabel:
+            category?.label_zh || category?.label_en || categoryId,
+          categoryLabelEn: category?.label_en,
+          evidence: evidenceByKey.get(`${dimensionId}:${categoryId}`),
+        };
+      }),
+    )
+    .sort(
+      (left, right) =>
+        left.dimensionIndex - right.dimensionIndex ||
+        left.categoryLabel.localeCompare(right.categoryLabel, "zh-CN"),
+    );
+
+  if (!assignments.length && !loading && !error) return null;
+
+  return (
+    <section className="detail-section classification-section">
+      <div className="detail-section-title">
+        <h3>分类与依据</h3>
+        {data.taxonomy?.version && (
+          <span className="taxonomy-version">{data.taxonomy.version}</span>
+        )}
+      </div>
+      {loading && (
+        <p className="classification-loading">
+          <LoaderCircle className="spin" size={13} />
+          正在加载公开分类依据…
+        </p>
+      )}
+      {error && (
+        <p className="classification-error">
+          分类标签仍可使用，但依据 shard 加载失败：{error}
+        </p>
+      )}
+      <div className="classification-list">
+        {assignments.map((assignment) => {
+          const evidence = assignment.evidence;
+          const score = evidence
+            ? confidencePercent(evidence.confidence)
+            : null;
+          return (
+            <article
+              className="classification-card"
+              key={`${assignment.dimensionId}:${assignment.categoryId}`}
+            >
+              <div className="classification-card-heading">
+                <div>
+                  <small>{assignment.dimensionLabel}</small>
+                  <button
+                    onClick={() =>
+                      onFacetSelect(
+                        assignment.dimensionId,
+                        assignment.categoryId,
+                      )
+                    }
+                    title="将该分类加入左侧筛选"
+                    type="button"
+                  >
+                    {assignment.categoryLabel}
+                  </button>
+                  {assignment.categoryLabelEn &&
+                    assignment.categoryLabelEn !== assignment.categoryLabel && (
+                      <span>{assignment.categoryLabelEn}</span>
+                    )}
+                </div>
+                {score != null && <strong>{score}%</strong>}
+              </div>
+
+              {evidence ? (
+                <details className="classification-evidence">
+                  <summary>
+                    {METHOD_LABELS[evidence.method] ?? evidence.method}
+                    <span>查看依据</span>
+                  </summary>
+                  <div>
+                    {evidence.signals.length > 0 && (
+                      <section>
+                        <h4>Signals</h4>
+                        <ul>
+                          {evidence.signals.map((signal, index) => (
+                            <li key={`${signal.kind}:${signal.value}:${index}`}>
+                              <span>{signal.field || signal.kind}</span>
+                              <strong>{signal.value}</strong>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+                    {evidence.review_sources.length > 0 && (
+                      <section>
+                        <h4>Review sources</h4>
+                        <ul>
+                          {evidence.review_sources.map((source) => (
+                            <li key={source.mention_id}>
+                              <span>{source.source_file}</span>
+                              <strong>{source.heading}</strong>
+                              <small>{source.mention_id}</small>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+                    {evidence.rule_ids.length > 0 && (
+                      <p className="classification-rules">
+                        Rules: {evidence.rule_ids.join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                </details>
+              ) : (
+                <p className="classification-no-evidence">
+                  当前公开快照没有该标签的详细依据。
+                </p>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 function RelationList({
   data,
   indices,

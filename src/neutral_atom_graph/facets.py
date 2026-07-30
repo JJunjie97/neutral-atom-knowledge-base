@@ -13,6 +13,24 @@ from .db import LiteratureDB, utc_now
 
 DERIVED_METHODS = ("review_hierarchy", "venue_metadata")
 
+VENUE_ALIASES = {
+    "arxiv": "arXiv",
+    "arxiv (cornell university)": "arXiv",
+    "nat. commun": "Nature Communications",
+    "nat. phys": "Nature Physics",
+    "new j. phys": "New Journal of Physics",
+    "phys. rev. a": "Physical Review A",
+    "phys. rev. applied": "Physical Review Applied",
+    "phys. rev. b": "Physical Review B",
+    "phys. rev. d": "Physical Review D",
+    "phys. rev. e": "Physical Review E",
+    "phys. rev. lett": "Physical Review Letters",
+    "phys. rev. research": "Physical Review Research",
+    "phys. rev. x": "Physical Review X",
+    "rev. sci. instrum": "Review of Scientific Instruments",
+    "sci. adv": "Science Advances",
+}
+
 
 def _short_openalex_id(value: Any) -> str | None:
     if not isinstance(value, str):
@@ -127,6 +145,14 @@ def _slug(value: str) -> str:
     return f"{base[:72]}-{digest}"
 
 
+def normalize_venue(value: str) -> str:
+    """Normalize common journal abbreviations without inferring a topic."""
+
+    label = re.sub(r"\s+", " ", value).strip()
+    key = label.casefold().rstrip(".")
+    return VENUE_ALIASES.get(key, label)
+
+
 def _json_list(value: str | None) -> list[Any]:
     try:
         parsed = json.loads(value or "[]")
@@ -214,7 +240,8 @@ def _derived_assignments(
             """,
             sorted(work_ids),
         ):
-            label = re.sub(r"\s+", " ", str(work["venue"])).strip()
+            raw_label = str(work["venue"])
+            label = normalize_venue(raw_label)
             category = _slug(label)
             dynamic_labels["venue"][category] = label
             key = (int(work["work_id"]), "venue", category, "venue_metadata")
@@ -380,13 +407,18 @@ def classify_facets(
     manifest = _merge_manifest(taxonomy, dynamic_labels)
     with db.transaction():
         _register_manifest(db, taxonomy, manifest)
+        seed_scope = (
+            " AND work_id IN (SELECT work_id FROM works WHERE is_seed=1)"
+            if seed_only
+            else ""
+        )
         db.conn.execute(
             f"""
             DELETE FROM work_classifications
-            WHERE taxonomy_version=?
-              AND method IN ({','.join('?' for _ in DERIVED_METHODS)})
+            WHERE method IN ({','.join('?' for _ in DERIVED_METHODS)})
+            {seed_scope}
             """,
-            [taxonomy.version, *DERIVED_METHODS],
+            list(DERIVED_METHODS),
         )
         for assignment in derived:
             now = utc_now()
@@ -451,14 +483,22 @@ def taxonomy_manifest(db: LiteratureDB) -> dict[str, Any]:
 def compact_classification_rows(
     db: LiteratureDB, work_ids: Iterable[int] | None = None
 ) -> dict[int, list[dict[str, Any]]]:
+    manifest = taxonomy_manifest(db)
+    active_version = manifest.get("version")
+    clauses: list[str] = []
     params: list[Any] = []
-    where = ""
+    if active_version:
+        clauses.append("(taxonomy_version=? OR method='manual')")
+        params.append(active_version)
+    else:
+        clauses.append("method='manual'")
     if work_ids is not None:
         ids = sorted({int(work_id) for work_id in work_ids})
         if not ids:
             return {}
-        where = f"WHERE work_id IN ({','.join('?' for _ in ids)})"
+        clauses.append(f"work_id IN ({','.join('?' for _ in ids)})")
         params.extend(ids)
+    where = "WHERE " + " AND ".join(clauses)
     mention_rows = {
         str(row["mention_id"]): row
         for row in db.conn.execute(

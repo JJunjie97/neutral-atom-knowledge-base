@@ -29,7 +29,8 @@ export default function OverviewView({
   const sectionStats = useMemo(() => {
     const counts = new Map<string, number>();
     for (const node of visibleNodes) {
-      counts.set(node.group, (counts.get(node.group) ?? 0) + 1);
+      const layoutGroup = node.layoutGroup ?? node.group;
+      counts.set(layoutGroup, (counts.get(layoutGroup) ?? 0) + 1);
     }
     return data.sections
       .map((section) => ({
@@ -124,10 +125,10 @@ export default function OverviewView({
         <article className="overview-panel">
           <div className="panel-heading">
             <div>
-              <span className="timeline-kicker">TOPICS</span>
-              <h3>综述章节分布</h3>
+              <span className="timeline-kicker">LAYOUT PARTITIONS</span>
+              <h3>星图布局分区</h3>
             </div>
-            <small>{sectionStats.length} 个主题簇</small>
+            <small>{sectionStats.length} 个布局分区</small>
           </div>
           <div className="section-bars">
             {sectionStats.map((section) => (

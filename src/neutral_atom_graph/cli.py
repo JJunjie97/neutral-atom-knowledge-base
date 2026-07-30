@@ -148,7 +148,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Build auditable multi-dimensional facets from local metadata and review context.",
     )
     _add_db(classify)
-    classify.add_argument("--taxonomy", default="config/taxonomy.json")
+    classify.add_argument(
+        "--taxonomy", default="taxonomy/neutral_atom_taxonomy.json"
+    )
     classify.add_argument(
         "--tex-dir",
         default="library/papers/arxiv/2607/2607.21554/source",

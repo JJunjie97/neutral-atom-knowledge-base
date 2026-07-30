@@ -1,0 +1,1 @@
+{"id":"doi:10.48550/arxiv.1902.02332","paperUid":"paper-00000070","taxonomyVersion":"2026.07.30.5","facets":{"venue":["arxiv-93112796"]},"classifications":[{"taxonomy_version":"2026.07.30.5","dimension":"venue","category":"arxiv-93112796","method":"venue_metadata","confidence":1.0,"rule_ids":[],"signals":[{"kind":"metadata","value":"arXiv","field":"venue"}],"review_sources":[]}]}

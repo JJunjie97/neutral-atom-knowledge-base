@@ -6,6 +6,9 @@ import "./local-graph.css";
 import "./translation.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+  ),
   title: {
     default: "中性原子量子计算 · 文献星图",
     template: "%s · 文献星图",

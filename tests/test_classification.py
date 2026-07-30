@@ -13,7 +13,7 @@ from neutral_atom_graph.classification import (
 )
 from neutral_atom_graph.db import LiteratureDB, utc_now
 from neutral_atom_graph.export import export_graph
-from neutral_atom_graph.facets import classify_facets
+from neutral_atom_graph.facets import classify_facets, normalize_venue
 
 
 def _write_taxonomy(path: Path) -> None:
@@ -79,8 +79,76 @@ class ReviewMentionTests(unittest.TestCase):
         self.assertEqual(mentions[0]["section_path"], ["Hardware", "Arrays"])
         self.assertEqual(mentions[0]["source_file"], "child.tex")
 
+    def test_context_is_scoped_to_the_cited_sentence(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "main.tex").write_text(
+                "\\section{Hardware}\n"
+                "Strontium clocks were demonstrated~\\cite{sr}. "
+                "Ytterbium tweezers followed~\\cite{yb}.\n",
+                encoding="utf-8",
+            )
+            mentions = extract_review_mentions(root, review_id="review:test")
+        contexts = {item["bib_key"]: item["context_text"] for item in mentions}
+        self.assertIn("Strontium", contexts["sr"])
+        self.assertNotIn("Ytterbium", contexts["sr"])
+        self.assertIn("Ytterbium", contexts["yb"])
+        self.assertNotIn("Strontium", contexts["yb"])
+
+    def test_latex_isotope_context_is_normalized(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "main.tex").write_text(
+                "\\section{Hardware}\n"
+                "$^{133}$Cs atom qubits~\\cite{cs}.\n",
+                encoding="utf-8",
+            )
+            mentions = extract_review_mentions(root, review_id="review:test")
+        self.assertIn("133 Cs atom", mentions[0]["context_text"])
+
+    def test_biblatex_ids_alias_resolves_to_primary_seed_work(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            tex = root / "tex"
+            tex.mkdir()
+            (tex / "main.tex").write_text(
+                "\\section{Hardware}\nAlias citation~\\cite{paper_alias}.\n",
+                encoding="utf-8",
+            )
+            with LiteratureDB(root / "test.sqlite") as db:
+                db.ingest_bib_entries(
+                    parse_bibtex(
+                        """
+                        @article{paper_primary,
+                          title={Alias-aware citation mapping},
+                          ids={paper_alias, paper_legacy},
+                          doi={10.1234/alias}
+                        }
+                        """
+                    ),
+                    {},
+                )
+                result = sync_review_mentions(
+                    db, tex, review_id="review:aliases"
+                )
+                mention = db.conn.execute(
+                    "SELECT work_id,bib_key FROM review_mentions"
+                ).fetchone()
+            self.assertEqual(result["resolved"], 1)
+            self.assertEqual(result["unresolved"], 0)
+            self.assertEqual(mention["bib_key"], "paper_alias")
+            self.assertIsNotNone(mention["work_id"])
+
 
 class ClassificationPipelineTests(unittest.TestCase):
+    def test_common_venue_aliases_are_normalized(self) -> None:
+        self.assertEqual(
+            normalize_venue("Phys. Rev. Lett."), "Physical Review Letters"
+        )
+        self.assertEqual(
+            normalize_venue("arXiv (Cornell University)"), "arXiv"
+        )
+
     def test_rule_derived_facets_cache_backfill_and_export(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -233,6 +301,125 @@ class ClassificationPipelineTests(unittest.TestCase):
             self.assertIn("hardware.tex", evidence_text)
             self.assertNotIn("Rubidium arrays are controlled optically", evidence_text)
 
+    def test_seed_only_run_preserves_external_rule_assignments(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            taxonomy_path = root / "taxonomy.json"
+            _write_taxonomy(taxonomy_path)
+            with LiteratureDB(root / "test.sqlite") as db:
+                db.ingest_bib_entries(
+                    parse_bibtex(
+                        """
+                        @article{seed,
+                          title={Rubidium seed processor},
+                          doi={10.1234/seed}
+                        }
+                        """
+                    ),
+                    {},
+                )
+                external_id = db.upsert_work(
+                    {"title": "Rubidium external reference"},
+                    [("openalex", "W999")],
+                )
+                db.conn.commit()
+                taxonomy = load_taxonomy(taxonomy_path)
+
+                classify_facets(db, taxonomy)
+                self.assertEqual(
+                    db.conn.execute(
+                        """
+                        SELECT COUNT(*) FROM work_classifications
+                        WHERE work_id=? AND method='deterministic_rule'
+                        """,
+                        (external_id,),
+                    ).fetchone()[0],
+                    1,
+                )
+
+                classify_facets(db, taxonomy, seed_only=True)
+                self.assertEqual(
+                    db.conn.execute(
+                        """
+                        SELECT COUNT(*) FROM work_classifications
+                        WHERE work_id=? AND method='deterministic_rule'
+                        """,
+                        (external_id,),
+                    ).fetchone()[0],
+                    1,
+                )
+
+    def test_taxonomy_upgrade_replaces_automatic_labels_not_manual_labels(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            taxonomy_path = root / "taxonomy.json"
+            _write_taxonomy(taxonomy_path)
+            with LiteratureDB(root / "test.sqlite") as db:
+                db.ingest_bib_entries(
+                    parse_bibtex(
+                        """
+                        @article{seed,
+                          title={Rubidium seed processor},
+                          doi={10.1234/seed}
+                        }
+                        """
+                    ),
+                    {},
+                )
+                first_taxonomy = load_taxonomy(taxonomy_path)
+                classify_facets(db, first_taxonomy)
+                work_id = int(
+                    db.conn.execute(
+                        "SELECT work_id FROM seed_entries WHERE bib_key='seed'"
+                    ).fetchone()[0]
+                )
+                db.conn.execute(
+                    """
+                    INSERT INTO work_classifications(
+                      work_id,taxonomy_version,taxonomy_digest,dimension_id,
+                      category_id,method,confidence,evidence_json,created_at,updated_at
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?)
+                    """,
+                    (
+                        work_id,
+                        first_taxonomy.version,
+                        first_taxonomy.digest,
+                        "curation",
+                        "verified",
+                        "manual",
+                        1.0,
+                        "{}",
+                        utc_now(),
+                        utc_now(),
+                    ),
+                )
+                db.conn.commit()
+
+                payload = json.loads(taxonomy_path.read_text(encoding="utf-8"))
+                payload["version"] = "test-v2"
+                taxonomy_path.write_text(
+                    json.dumps(payload, ensure_ascii=False), encoding="utf-8"
+                )
+                second_taxonomy = load_taxonomy(taxonomy_path)
+                classify_facets(db, second_taxonomy)
+
+                automatic_versions = {
+                    row[0]
+                    for row in db.conn.execute(
+                        """
+                        SELECT DISTINCT taxonomy_version
+                        FROM work_classifications
+                        WHERE method<>'manual'
+                        """
+                    )
+                }
+                self.assertEqual(automatic_versions, {"test-v2"})
+                self.assertEqual(
+                    db.conn.execute(
+                        "SELECT COUNT(*) FROM work_classifications WHERE method='manual'"
+                    ).fetchone()[0],
+                    1,
+                )
 
 if __name__ == "__main__":
     unittest.main()
