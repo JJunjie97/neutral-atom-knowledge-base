@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import Any
 
+from .admin_server import DEFAULT_ORIGINS, serve_admin
 from .classification import load_taxonomy, sync_review_mentions
 from .crossref import CrossrefClient, repair_missing_doi_metadata
 from .db import LiteratureDB
@@ -171,6 +172,21 @@ def build_parser() -> argparse.ArgumentParser:
     stats = sub.add_parser("stats", help="Show database coverage.")
     _add_db(stats)
 
+    admin = sub.add_parser(
+        "admin",
+        help="Run the authenticated loopback-only database administration API.",
+    )
+    _add_db(admin)
+    admin.add_argument("--host", default="127.0.0.1")
+    admin.add_argument("--port", type=int, default=8765)
+    admin.add_argument("--backup-dir", default="data/backups")
+    admin.add_argument(
+        "--allow-origin",
+        action="append",
+        default=[],
+        help="Additional loopback HTTP origin allowed by CORS (repeatable).",
+    )
+
     all_parser = sub.add_parser("all", help="Ingest, crawl and export.")
     _add_db(all_parser)
     all_parser.add_argument(
@@ -215,6 +231,17 @@ def main(argv: list[str] | None = None) -> None:
     _load_local_env()
     args = build_parser().parse_args(argv)
     db_path = Path(args.db)
+    if args.command == "admin":
+        origins = tuple(dict.fromkeys((*DEFAULT_ORIGINS, *args.allow_origin)))
+        serve_admin(
+            db_path,
+            host=args.host,
+            port=args.port,
+            token=os.getenv("NAKB_ADMIN_TOKEN"),
+            backup_dir=args.backup_dir,
+            allowed_origins=origins,
+        )
+        return
     with LiteratureDB(db_path) as db:
         if args.command == "ingest":
             _print(ingest(db, args.bib, args.tex_dir))

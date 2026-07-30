@@ -16,6 +16,7 @@ venv/
 /data/database/*
 !/data/database/.gitkeep
 /data/cache/
+/data/backups/
 /data/exports/*
 !/data/exports/.gitkeep
 /data/catalog/*

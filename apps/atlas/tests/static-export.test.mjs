@@ -31,6 +31,7 @@ function findForbiddenPublicationField(value) {
 test("exports a self-contained literature atlas", async () => {
   await Promise.all([
     assertFile("index.html"),
+    assertFile("admin/index.html"),
     assertFile("favicon.svg"),
     assertFile("og.png"),
     assertFile(".nojekyll"),
@@ -47,6 +48,10 @@ test("exports a self-contained literature atlas", async () => {
     assert.match(html, new RegExp(`${expectedBasePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/favicon\\.svg`));
   }
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/u);
+
+  const adminHtml = await readFile(new URL("admin/index.html", outUrl), "utf8");
+  assert.match(adminHtml, /数据库管理台/u);
+  assert.match(adminHtml, /127\.0\.0\.1:8765/u);
 });
 
 test("ships valid graph data and no legacy worker build", async () => {

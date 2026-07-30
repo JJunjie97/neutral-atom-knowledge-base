@@ -14,6 +14,7 @@
 - 缺题名节点使用唯一外部 ID，不伪造“未命名文献”；
 - 摘要按论文静态分片加载，必要时再回退 OpenAlex；
 - 支持 Chrome 内置英文 → 中文题目/摘要翻译，结果只缓存在当前浏览器。
+- 本地 `/admin/` 管理页可连接 loopback Python API 校对原始题录；GitHub Pages 上保持静态只读。
 
 两种方向的严格语义、同年/逆序/未知年份的布局规则、当前一层参考网络的数据边界和未来递归抓取路线，见 [引用星图与发展脉络的可视化语义](../../docs/VISUALIZATION.md)。
 
@@ -68,8 +69,22 @@ $env:PAGES_BASE_PATH = "/neutral-atom-knowledge-base"
 npm run test:pages
 ```
 
+## 本地数据库管理
+
+管理原始 SQLite 时，在仓库根目录另开一个 PowerShell：
+
+```powershell
+python -m neutral_atom_graph admin --host 127.0.0.1 --port 8765
+```
+
+保持 `npm run dev` 运行，然后打开 `http://localhost:3000/admin/`，填写 `http://127.0.0.1:8765` 和 Python 服务输出的临时 token。token 只存于当前浏览器会话的 `sessionStorage`，不会进入静态资源。
+
+第一版用于修改受控的题录字段和人工分类；标识符映射、引用边、种子 BibTeX、provider 原始记录、自动分类、论文文件与原始 JSON 保持只读。第一次写入前会通过 SQLite online backup 在 `data/backups/` 建立一致快照，所有成功修改写入审计表；并发版本不一致时返回冲突而不是覆盖。完整说明见 [本地数据库管理](../../docs/DATABASE-ADMIN.md)。
+
 ## GitHub Pages
 
 网页使用 Next.js `output: "export"`。推送仓库后，在 GitHub 的 **Settings → Pages → Source** 选择 **GitHub Actions**；根目录的 `.github/workflows/pages.yml` 会构建 `apps/atlas/out` 并发布。`basePath` 由 GitHub 自动注入，因此在用户名主页和项目子路径中都能正确加载脚本、图片和图数据。
+
+GitHub Pages 上的 `/admin/` 是静态说明页，不拥有 SQLite、管理 token 或服务端写权限。修改原始数据必须从 `http://localhost:3000/admin/` 连接只监听本机回环地址的管理 API。
 
 翻译功能依赖支持 Translator API 的桌面版 Chrome（界面会在不支持时给出说明）。它在用户设备本地运行，不会把 API key 放入静态网页。

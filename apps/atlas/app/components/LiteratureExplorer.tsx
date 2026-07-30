@@ -9,6 +9,7 @@ import {
   Network,
   RotateCcw,
   Search,
+  Settings2,
   Sparkles,
 } from "lucide-react";
 import {
@@ -316,6 +317,10 @@ export default function LiteratureExplorer() {
               </button>
             );
           })}
+          <a className="admin-tab-link" href={publicUrl("/admin/")}>
+            <Settings2 size={16} />
+            {"\u6570\u636e\u7ba1\u7406"}
+          </a>
         </nav>
         <div className="dataset-stamp">
           <Database size={15} />

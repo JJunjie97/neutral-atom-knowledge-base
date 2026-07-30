@@ -218,6 +218,19 @@ CREATE INDEX IF NOT EXISTS idx_work_classifications_facet
     ON work_classifications(taxonomy_version,dimension_id,category_id);
 CREATE INDEX IF NOT EXISTS idx_work_classifications_work
     ON work_classifications(work_id);
+
+CREATE TABLE IF NOT EXISTS admin_audit_log (
+    audit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    action TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    changes_json TEXT NOT NULL DEFAULT '{}',
+    actor TEXT NOT NULL DEFAULT 'local_admin',
+    request_id TEXT,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_entity
+    ON admin_audit_log(entity_type,entity_id,audit_id DESC);
 """
 
 
@@ -267,11 +280,13 @@ class LiteratureDB:
             "metadata_status": "TEXT NOT NULL DEFAULT 'incomplete'",
             "entity_kind": "TEXT NOT NULL DEFAULT 'scholarly_work'",
         }
+        added_columns: set[str] = set()
         for column, declaration in additions.items():
             if column not in columns:
                 self.conn.execute(
                     f"ALTER TABLE works ADD COLUMN {column} {declaration}"
                 )
+                added_columns.add(column)
         self.conn.execute(
             """
             UPDATE works
@@ -279,38 +294,40 @@ class LiteratureDB:
             WHERE paper_uid IS NULL OR paper_uid=''
             """
         )
+        status_predicate = "metadata_status IS NULL OR metadata_status=''"
+        if "metadata_status" in added_columns:
+            status_predicate += " OR metadata_status='incomplete'"
         self.conn.execute(
-            """
+            f"""
             UPDATE works
             SET metadata_status=CASE
                 WHEN title IS NOT NULL AND trim(title)<>'' THEN 'complete'
                 WHEN openalex_id IS NOT NULL THEN 'unresolved_reference'
                 ELSE 'incomplete'
             END
-            WHERE metadata_status IS NULL
-               OR metadata_status=''
-               OR metadata_status='incomplete'
+            WHERE {status_predicate}
             """
         )
         self.conn.execute(
             "UPDATE works SET title_source='legacy' "
             "WHERE title IS NOT NULL AND trim(title)<>'' AND title_source IS NULL"
         )
-        for row in self.conn.execute(
-            "SELECT work_id,raw_json FROM seed_entries"
-        ).fetchall():
-            fields = json.loads(row["raw_json"] or "{}")
-            note = str(fields.get("note") or "").casefold()
-            if "private communication" in note:
-                self.conn.execute(
-                    """
-                    UPDATE works
-                    SET entity_kind='private_communication',
-                        metadata_status='non_bibliographic'
-                    WHERE work_id=?
-                    """,
-                    (int(row["work_id"]),),
-                )
+        if "entity_kind" in added_columns:
+            for row in self.conn.execute(
+                "SELECT work_id,raw_json FROM seed_entries"
+            ).fetchall():
+                fields = json.loads(row["raw_json"] or "{}")
+                note = str(fields.get("note") or "").casefold()
+                if "private communication" in note:
+                    self.conn.execute(
+                        """
+                        UPDATE works
+                        SET entity_kind='private_communication',
+                            metadata_status='non_bibliographic'
+                        WHERE work_id=?
+                        """,
+                        (int(row["work_id"]),),
+                    )
         self.conn.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_works_paper_uid "
             "ON works(paper_uid)"

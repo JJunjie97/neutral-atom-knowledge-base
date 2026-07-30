@@ -156,9 +156,11 @@ input:focus-visible,
   background: #09111f;
 }
 
-.view-tabs button {
+.view-tabs button,
+.view-tabs .admin-tab-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 36px;
   padding: 0 14px;
   gap: 7px;
@@ -169,10 +171,21 @@ input:focus-visible,
   cursor: pointer;
   font-size: 13px;
   font-weight: 620;
+  text-decoration: none;
 }
 
-.view-tabs button:hover {
+.view-tabs button:hover,
+.view-tabs .admin-tab-link:hover {
   color: var(--atlas-text);
+}
+
+.view-tabs .admin-tab-link {
+  border-left: 1px solid var(--atlas-border);
+  border-radius: 0 5px 5px 0;
+}
+
+.view-tabs .admin-tab-link svg {
+  color: var(--atlas-gold);
 }
 
 .view-tabs button.is-active {
@@ -1564,7 +1577,8 @@ input:focus-visible,
     width: 100%;
   }
 
-  .view-tabs button {
+  .view-tabs button,
+  .view-tabs .admin-tab-link {
     flex: 1;
     justify-content: center;
   }
@@ -1623,7 +1637,8 @@ input:focus-visible,
     font-size: 15px;
   }
 
-  .view-tabs button {
+  .view-tabs button,
+  .view-tabs .admin-tab-link {
     padding: 0 8px;
     font-size: 11px;
   }

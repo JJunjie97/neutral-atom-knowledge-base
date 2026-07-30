@@ -26,6 +26,7 @@
 │   └── papers/                 # 数据库登记后的论文目录
 ├── data/
 │   ├── database/               # 本地 SQLite；默认不进入 Git
+│   ├── backups/                # 写入前的一致性快照；默认不进入 Git
 │   ├── exports/                # 可重建的图数据；默认不进入 Git
 │   └── catalog/                # AI 友好的 JSONL/CSV/Markdown 总目录
 ├── collections/                # 综述、专题或课程的种子集合
@@ -78,6 +79,14 @@ npm install
 npm run dev
 ```
 
+本地校对原始题录时，在仓库根目录另开一个 PowerShell 启动只监听回环地址的管理 API：
+
+```powershell
+python -m neutral_atom_graph admin --host 127.0.0.1 --port 8765
+```
+
+复制终端输出的临时 token，然后打开 `http://localhost:3000/admin/`。token 只进入当前浏览器会话的 `sessionStorage`；首次实际写入前会创建 SQLite online backup，成功修改会进入审计日志。可编辑字段、只读关系数据和恢复流程见 [本地数据库管理](docs/DATABASE-ADMIN.md)。
+
 `classify` 会从本地 OpenAlex 缓存恢复 topics，解析综述中的 citation context 和章节路径，并生成元素/同位素、物理平台、架构、门与控制技术、QEC、编译、光子、网络、应用和 venue 等独立 facets。它不需要联网，并会持续输出处理进度；规则结果保留置信度和来源，人工标签不会被重跑覆盖。
 
 原先界面中的“未命名文献”不会再被伪装成同名节点。没有可靠题名时，系统保留其 DOI、arXiv、OpenAlex 或稳定 `paper_uid`，显示为 `Metadata unavailable - <identifier>`；这类节点仍然承载真实引用边，可在网页中单独显示或隐藏。`private communication` 会作为非论文知识实体单独标记。
@@ -86,11 +95,14 @@ npm run dev
 
 `apps/atlas` 使用 Next.js 静态导出，不需要服务器或 API key。推送到 GitHub 后，在仓库 **Settings → Pages → Source** 选择 **GitHub Actions**；`.github/workflows/pages.yml` 会在 `main` 分支更新时构建并发布。网页路径会自动适配 `https://<user>.github.io/<repository>/`。
 
+GitHub Pages 上的 `/admin/` 仅显示静态说明，不会也不能直接修改本地 SQLite。真正的数据管理只在 `http://localhost:3000/admin/` 与 loopback Python API 之间进行，数据库和 token 均不会进入 Pages 构建产物。
+
 ## GitHub 与数据边界
 
 公开仓库只提交代码、manifest、测试和网页所需的精简图快照。以下内容默认不会提交：
 
 - `data/database/literature.sqlite`
+- `data/backups/` 中的数据库快照
 - API 缓存和本地环境变量
 - 未确认再分发许可证的 PDF
 - 仅授权 arXiv 分发、或许可证尚未确认的论文源码
@@ -104,6 +116,7 @@ SQLite 当前超过 GitHub 普通 Git 的单文件限制，因此应通过 Relea
 
 - [系统架构](docs/ARCHITECTURE.md)
 - [AI 检索与接入](docs/AI-ACCESS.md)
+- [本地数据库管理、安全写入与恢复](docs/DATABASE-ADMIN.md)
 - [多维分类体系与证据模型](docs/CLASSIFICATION.md)
 - [当前分类覆盖与误判审计报告](docs/CLASSIFICATION-REPORT.md)
 - [引用方向与年份分层发展脉络](docs/VISUALIZATION.md)
