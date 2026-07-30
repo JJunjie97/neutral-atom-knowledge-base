@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "title": "Strategic Plan for Neutral Atom Quantum Computation",
+  "year": 2026,
+  "language": "en",
+  "identifiers": {
+    "arxiv": "2607.21554"
+  },
+  "documents": [
+    {
+      "kind": "pdf",
+      "path": "original/2607.21554v1.pdf",
+      "media_type": "application/pdf",
+      "language": "en",
+      "license": "unknown",
+      "redistributable": false
+    },
+    {
+      "kind": "source",
+      "path": "source/main.tex",
+      "source_url": "https://arxiv.org/e-print/2607.21554v1",
+      "media_type": "application/x-tex",
+      "language": "en",
+      "license": "https://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "redistributable": false
+    },
+    {
+      "kind": "bibliography",
+      "path": "source/bibliography.bib",
+      "source_url": "https://arxiv.org/e-print/2607.21554v1",
+      "media_type": "application/x-bibtex",
+      "language": "en",
+      "license": "https://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "redistributable": false
+    },
+    {
+      "kind": "markdown",
+      "path": "markdown/paper.md",
+      "media_type": "text/markdown",
+      "language": "en",
+      "license": "unknown",
+      "redistributable": false,
+      "planned": true
+    }
+  ]
+}

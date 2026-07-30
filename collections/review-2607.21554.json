@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "id": "review-2607.21554",
+  "name": "Strategic Plan for Neutral Atom Quantum Computation",
+  "seed_paper": "arxiv:2607.21554",
+  "bib_path": "library/papers/arxiv/2607/2607.21554/source/bibliography.bib",
+  "tex_dir": "library/papers/arxiv/2607/2607.21554/source",
+  "description": "The seed collection used to build the neutral-atom quantum-computing citation graph."
+}

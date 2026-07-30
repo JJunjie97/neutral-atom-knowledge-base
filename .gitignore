@@ -1,42 +1,55 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
 
-# testing
-/coverage
+# Local databases, caches, and reproducible exports
+/data/database/*
+!/data/database/.gitkeep
+/data/cache/
+/data/exports/*
+!/data/exports/.gitkeep
+/data/catalog/*
+!/data/catalog/.gitkeep
 
-# next.js
-/.next/
-/.vinext/
-/out/
+# Paper binaries and converted full text are local by default.
+# Commit an individual file only after its redistribution license is verified.
+/library/papers/**/original/*
+!/library/papers/**/original/.gitkeep
+/library/papers/**/source/*
+!/library/papers/**/source/.gitkeep
+/library/papers/**/markdown/*
+!/library/papers/**/markdown/.gitkeep
+/library/inbox/*
+!/library/inbox/.gitkeep
 
-# misc
+# Abstract text can carry separate rights even when bibliographic metadata is CC0.
+/apps/atlas/public/data/papers/*.json
+!/apps/atlas/public/data/papers/.gitkeep
+
+# Node / Next.js
+**/node_modules/
+**/.next/
+**/out/
+**/dist/
+**/.vinext/
+**/.wrangler/
+**/coverage/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# Editors and operating systems
 .DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-next-env.d.ts
-/dist/
-/.wrangler/
-/outputs/
-/work/
+Thumbs.db
+.idea/
+.vscode/
