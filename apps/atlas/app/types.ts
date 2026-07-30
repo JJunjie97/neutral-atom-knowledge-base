@@ -127,15 +127,20 @@ export type GraphMeta = {
   layout: string;
 };
 
+/** Stored direction: citing paper -> cited/reference paper. */
+export type CitationEdge = [citingIndex: number, citedIndex: number];
+
 export type GraphData = {
   meta: GraphMeta;
   sections: GraphSection[];
   taxonomy: GraphTaxonomy;
   nodes: GraphNode[];
-  edges: [number, number][];
+  edges: CitationEdge[];
 };
 
 export type ViewName = "graph" | "timeline" | "overview";
+
+export type GraphLayoutMode = "constellation" | "lineage";
 
 export type GraphFilters = {
   query: string;

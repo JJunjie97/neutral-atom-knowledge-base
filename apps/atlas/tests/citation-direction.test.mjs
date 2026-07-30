@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   arrowheadPoints,
+  CITATION_FLOW_LABELS,
   citationDirectionForFocus,
   orientedCitationEdge,
 } from "../app/citation-direction.ts";
@@ -21,6 +22,8 @@ test("citation and development views use explicit opposite visual flows", () => 
     from: 9,
     to: 4,
   });
+  assert.equal(CITATION_FLOW_LABELS.citation, "引用者 → 被引用文献");
+  assert.equal(CITATION_FLOW_LABELS.development, "知识来源 → 后续工作");
 });
 
 test("arrowhead points toward the cited target", () => {

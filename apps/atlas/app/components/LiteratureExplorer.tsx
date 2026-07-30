@@ -29,6 +29,7 @@ import { publicUrl } from "../site-config";
 import type {
   GraphData,
   GraphFilters,
+  GraphLayoutMode,
   ViewName,
 } from "../types";
 import DetailsPanel from "./DetailsPanel";
@@ -57,7 +58,7 @@ const VIEWS: {
   icon: typeof Network;
 }[] = [
   { id: "graph", label: "关系星图", icon: Network },
-  { id: "timeline", label: "时间脉络", icon: Clock3 },
+  { id: "timeline", label: "年份浏览", icon: Clock3 },
   { id: "overview", label: "数据概览", icon: BarChart3 },
 ];
 
@@ -66,6 +67,8 @@ export default function LiteratureExplorer() {
   const [fullData, setFullData] = useState<GraphData | null>(null);
   const [scope, setScope] = useState<"core" | "full">("core");
   const [view, setView] = useState<ViewName>("graph");
+  const [graphLayout, setGraphLayout] =
+    useState<GraphLayoutMode>("constellation");
   const [filters, setFilters] = useState<GraphFilters>(INITIAL_FILTERS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isolateRootId, setIsolateRootId] = useState<string | null>(null);
@@ -235,16 +238,33 @@ export default function LiteratureExplorer() {
     setSelectedId(index == null || !data ? null : data.nodes[index].id);
   }
 
-  function toggleLocalGraph(index: number) {
+  function showLocalGraph(index: number, layout: GraphLayoutMode) {
     if (!data) return;
     const nodeId = data.nodes[index].id;
     setView("graph");
-    if (isolateRootId === nodeId) {
+    setGraphLayout(layout);
+    setIsolateRootId(nodeId);
+    setIsolateDepth(layout === "lineage" ? 2 : 1);
+  }
+
+  function toggleLocalGraph(index: number) {
+    if (!data) return;
+    const nodeId = data.nodes[index].id;
+    if (isolateRootId === nodeId && graphLayout === "constellation") {
       setIsolateRootId(null);
       return;
     }
-    setIsolateRootId(nodeId);
-    setIsolateDepth(1);
+    showLocalGraph(index, "constellation");
+  }
+
+  function toggleLineageGraph(index: number) {
+    if (!data) return;
+    const nodeId = data.nodes[index].id;
+    if (isolateRootId === nodeId && graphLayout === "lineage") {
+      setIsolateRootId(null);
+      return;
+    }
+    showLocalGraph(index, "lineage");
   }
 
   if (error && !coreData) {
@@ -509,7 +529,9 @@ export default function LiteratureExplorer() {
               data={data}
               isolateDepth={isolateDepth}
               isolateRootIndex={isolateRootIndex}
-              key={`${scope}-${isolateRootId ?? "global"}-${isolateDepth}`}
+              key={`${scope}-${isolateRootId ?? "global"}-${isolateDepth}-${graphLayout}`}
+              layout={graphLayout}
+              onLayoutChange={setGraphLayout}
               onExitIsolate={() => setIsolateRootId(null)}
               onIsolateDepthChange={setIsolateDepth}
               onSelect={selectIndex}
@@ -534,12 +556,20 @@ export default function LiteratureExplorer() {
 
           <DetailsPanel
             data={data}
-            isIsolatedRoot={
-              selectedId != null && selectedId === isolateRootId
+            isConstellationRoot={
+              selectedId != null &&
+              selectedId === isolateRootId &&
+              graphLayout === "constellation"
+            }
+            isLineageRoot={
+              selectedId != null &&
+              selectedId === isolateRootId &&
+              graphLayout === "lineage"
             }
             onClose={() => setSelectedId(null)}
             onFacetSelect={toggleFacet}
             onIsolate={toggleLocalGraph}
+            onLineage={toggleLineageGraph}
             onSelect={(index) => selectIndex(index)}
             selectedIndex={selectedIndex}
           />

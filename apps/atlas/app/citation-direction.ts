@@ -1,6 +1,11 @@
 export type CitationDirection = "outgoing" | "incoming";
 export type CitationFlowMode = "citation" | "development";
 
+export const CITATION_FLOW_LABELS: Record<CitationFlowMode, string> = {
+  citation: "引用者 → 被引用文献",
+  development: "知识来源 → 后续工作",
+};
+
 export type CanvasPoint = {
   x: number;
   y: number;

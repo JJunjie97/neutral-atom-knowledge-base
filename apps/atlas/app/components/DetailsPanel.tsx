@@ -7,6 +7,7 @@ import {
   Download,
   ExternalLink,
   GitCommitHorizontal,
+  GitFork,
   Languages,
   LoaderCircle,
   Network,
@@ -29,11 +30,13 @@ import type {
 
 type Props = {
   data: GraphData;
-  isIsolatedRoot: boolean;
+  isConstellationRoot: boolean;
+  isLineageRoot: boolean;
   selectedIndex: number | null;
   onClose: () => void;
   onFacetSelect: (dimensionId: string, categoryId: string) => void;
   onIsolate: (index: number) => void;
+  onLineage: (index: number) => void;
   onSelect: (index: number) => void;
 };
 
@@ -142,11 +145,13 @@ async function translateLongText(
 
 export default function DetailsPanel({
   data,
-  isIsolatedRoot,
+  isConstellationRoot,
+  isLineageRoot,
   selectedIndex,
   onClose,
   onFacetSelect,
   onIsolate,
+  onLineage,
   onSelect,
 }: Props) {
   const relations = useMemo(() => {
@@ -169,12 +174,14 @@ export default function DetailsPanel({
   return (
     <PaperDetails
       data={data}
-      isIsolatedRoot={isIsolatedRoot}
+      isConstellationRoot={isConstellationRoot}
+      isLineageRoot={isLineageRoot}
       key={data.nodes[selectedIndex].id}
       node={data.nodes[selectedIndex]}
       onClose={onClose}
       onFacetSelect={onFacetSelect}
       onIsolate={() => onIsolate(selectedIndex)}
+      onLineage={() => onLineage(selectedIndex)}
       onSelect={onSelect}
       relations={relations}
     />
@@ -183,20 +190,24 @@ export default function DetailsPanel({
 
 function PaperDetails({
   data,
-  isIsolatedRoot,
+  isConstellationRoot,
+  isLineageRoot,
   node,
   onClose,
   onFacetSelect,
   onIsolate,
+  onLineage,
   onSelect,
   relations,
 }: {
   data: GraphData;
-  isIsolatedRoot: boolean;
+  isConstellationRoot: boolean;
+  isLineageRoot: boolean;
   node: GraphNode;
   onClose: () => void;
   onFacetSelect: (dimensionId: string, categoryId: string) => void;
   onIsolate: () => void;
+  onLineage: () => void;
   onSelect: (index: number) => void;
   relations: { incoming: number[]; outgoing: number[] };
 }) {
@@ -471,38 +482,56 @@ function PaperDetails({
 
         <div className="details-metrics">
           <div>
-            <span>Graph degree</span>
-            <strong>{formatNumber(nodeDegree(node))}</strong>
+            <span>图内被引用</span>
+            <strong>{formatNumber(node.in)}</strong>
           </div>
           <div>
-            <span>Cited by (OpenAlex)</span>
+            <span>图内参考文献</span>
+            <strong>{formatNumber(node.out)}</strong>
+          </div>
+          <div>
+            <span>OpenAlex 被引用</span>
             <strong>{formatNumber(node.citations)}</strong>
           </div>
           <div>
-            <span>References</span>
+            <span>OpenAlex 参考文献</span>
             <strong>{formatNumber(node.references)}</strong>
           </div>
         </div>
 
         {relationCount > 0 && (
-          <button
-            className="isolate-map-button"
-            onClick={onIsolate}
-            type="button"
-          >
-            <Network size={17} />
-            <span>
-              <strong>
-                {isIsolatedRoot
-                  ? "返回完整星图"
-                  : "查看关联星图"}
-              </strong>
-              <small>
-                {relationCount} 篇直接关联 · 可切换 1-hop / 2-hop
-              </small>
-            </span>
-            <ArrowUpRight size={15} />
-          </button>
+          <div className="graph-map-actions">
+            <button
+              className="isolate-map-button"
+              onClick={onIsolate}
+              type="button"
+            >
+              <Network size={17} />
+              <span>
+                <strong>
+                  {isConstellationRoot ? "返回完整星图" : "查看关联星图"}
+                </strong>
+                <small>
+                  {relationCount} 篇直接关联 · 可切换 1-hop / 2-hop
+                </small>
+              </span>
+              <ArrowUpRight size={15} />
+            </button>
+            <button
+              className="isolate-map-button lineage-map-button"
+              onClick={onLineage}
+              type="button"
+            >
+              <GitFork size={17} />
+              <span>
+                <strong>
+                  {isLineageRoot ? "返回完整星图" : "查看发展脉络"}
+                </strong>
+                <small>知识来源 → 本文 → 后续工作 · 默认 2-hop</small>
+              </span>
+              <ArrowUpRight size={15} />
+            </button>
+          </div>
         )}
 
         {(externalUrl || openAlexUrl) && (
@@ -645,14 +674,14 @@ function PaperDetails({
           data={data}
           icon={<ArrowDownLeft size={15} />}
           indices={relations.outgoing}
-          label={`引用了 ${relations.outgoing.length} 篇`}
+          label={`本文引用的参考文献 · ${relations.outgoing.length} 篇`}
           onSelect={onSelect}
         />
         <RelationList
           data={data}
           icon={<ArrowUpRight size={15} />}
           indices={relations.incoming}
-          label={`被 ${relations.incoming.length} 篇引用`}
+          label={`引用本文的后续论文 · ${relations.incoming.length} 篇`}
           onSelect={onSelect}
         />
       </div>

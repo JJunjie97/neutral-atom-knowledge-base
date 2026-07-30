@@ -106,6 +106,7 @@ SQLite 当前超过 GitHub 普通 Git 的单文件限制，因此应通过 Relea
 - [AI 检索与接入](docs/AI-ACCESS.md)
 - [多维分类体系与证据模型](docs/CLASSIFICATION.md)
 - [当前分类覆盖与误判审计报告](docs/CLASSIFICATION-REPORT.md)
+- [引用方向与年份分层发展脉络](docs/VISUALIZATION.md)
 - [论文下载、归档与 Markdown 流程](docs/PAPER-INGESTION.md)
 - [数据与版权边界](docs/DATA-POLICY.md)
 - [网页说明](apps/atlas/README.md)

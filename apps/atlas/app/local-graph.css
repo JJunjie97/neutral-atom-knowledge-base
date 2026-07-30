@@ -90,6 +90,37 @@
   text-align: left;
 }
 
+.graph-map-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 14px 0 9px;
+  gap: 8px;
+}
+
+.graph-map-actions .isolate-map-button {
+  min-width: 0;
+  margin: 0;
+}
+
+.lineage-map-button {
+  border-color: #635f91;
+  background: #211f3c;
+  color: #c7c0ff;
+}
+
+.lineage-map-button:hover {
+  border-color: #9890dd;
+  background: #29264b;
+}
+
+.lineage-map-button strong {
+  color: #f0edff;
+}
+
+.lineage-map-button small {
+  color: #aaa4d3;
+}
+
 .isolate-map-button:hover {
   border-color: var(--atlas-accent);
   background: #14363d;
@@ -129,9 +160,17 @@
     max-width: none;
     transform: none;
   }
+
+  .citation-direction-legend.is-local {
+    top: 112px;
+  }
 }
 
 @media (max-width: 560px) {
+  .graph-map-actions {
+    grid-template-columns: 1fr;
+  }
+
   .local-graph-toolbar {
     grid-template-columns: minmax(0, 1fr) auto 34px;
   }
